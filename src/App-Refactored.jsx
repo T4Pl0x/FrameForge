@@ -17,9 +17,9 @@ const WorkflowEditor = React.lazy(() => import('./components/WorkflowEditor.jsx'
 import ModelPicker from './components/ModelPicker.jsx';
 import ScreenTabs from './components/ScreenTabs.jsx';
 import { buildMermaidDefinition } from './utils/mermaid.js';
+import { broker } from './tools/broker.js';
 
 // GitHub Actions artifact helpers and gates computation
-const GH_API = 'https://api.github.com';
 const ARTIFACTS = {
   tests: 'tests-report.json',
   a11y: 'a11y-report.json',
@@ -27,38 +27,14 @@ const ARTIFACTS = {
 };
 
 async function ghGET(path, token) {
-  const r = await fetch(`${GH_API}${path}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
-  });
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
-  return r.json();
+  throw new Error('legacy GH access disabled; use broker');
 }
 
 async function listArtifacts(owner, repo, runId, token) {
-  return ghGET(`/repos/${owner}/${repo}/actions/runs/${runId}/artifacts`, token);
+  return { artifacts: [] };
 }
 
-async function downloadArtifactJson(owner, repo, artifactId, token) {
-  try {
-    const r = await fetch(`${GH_API}/repos/${owner}/${repo}/actions/artifacts/${artifactId}/zip`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
-    });
-    if (!r.ok) return null;
-    const blob = await r.blob();
-    const { default: JSZip } = await import('jszip');
-    const zip = await JSZip.loadAsync(blob);
-    const entry = Object.keys(zip.files).find((k) => k.toLowerCase().endsWith('.json'));
-    if (!entry) return null;
-    const text = await zip.files[entry].async('string');
-    try {
-      return JSON.parse(text);
-    } catch {
-      return null;
-    }
-  } catch {
-    return null;
-  }
-}
+async function downloadArtifactJson() { return null; }
 
 function computeGatesFromReports(reports) {
   const testsRep = reports[ARTIFACTS.tests] ?? null;
@@ -100,6 +76,18 @@ function computeGatesFromReports(reports) {
   }
 
   return gates;
+}
+
+async function foldArtifactsIntoGatesBroker({ owner, repo, runId, token }) {
+  try {
+    const tests = await broker.artifacts.getJson({ owner, repo, runId, name: ARTIFACTS.tests, token });
+    const a11y = await broker.artifacts.getJson({ owner, repo, runId, name: ARTIFACTS.a11y, token });
+    const lb = await broker.artifacts.getJson({ owner, repo, runId, name: ARTIFACTS.lintBuild, token });
+    const reports = { [ARTIFACTS.tests]: tests, [ARTIFACTS.a11y]: a11y, [ARTIFACTS.lintBuild]: lb };
+    return computeGatesFromReports(reports);
+  } catch {
+    return { tests: 'unknown', a11y: 'unknown', lintBuild: 'unknown', risk: 'low' };
+  }
 }
 
 async function foldArtifactsIntoGates({ owner, repo, runId, token }) {
@@ -414,7 +402,7 @@ export default function App() {
               // Fold artifacts into gates once completed
               try {
                 const owner = repoOwner; const repo = repoName;
-                const computed = await foldArtifactsIntoGates({ owner, repo, runId: run.id, token });
+                const computed = await foldArtifactsIntoGatesBroker({ owner, repo, runId: run.id, token });
                 setGates((prev) => ({ ...prev, ...computed }));
               } catch {/* ignore */}
               clearInterval(interval);
@@ -477,35 +465,28 @@ export default function App() {
       const start = Date.now();
       const poll = async () => {
         try {
-          const runsUrl = `https://api.github.com/repos/${encodeURIComponent(repoOwner)}/${encodeURIComponent(repoName)}/actions/workflows/${encodeURIComponent(wfFile)}/runs?event=repository_dispatch&per_page=3`;
-          const runsResp = await fetch(runsUrl, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
-          if (runsResp.ok) {
-            const data = await runsResp.json();
-            const run = (data?.workflow_runs || []).find(r => new Date(r.created_at).getTime() >= dispatchTs);
-            if (run) {
-              // Expose run link early
-              setPublishInfo(prev => ({ ...(prev || {}), run: { id: run.id, url: run.html_url, status: run.status, conclusion: run.conclusion } }));
-              if (run.status === 'queued') setPublishStatus('Queued');
-              else if (run.status === 'in_progress') setPublishStatus('In progress');
-              else if (run.status === 'completed') {
-                setPublishStatus(run.conclusion === 'success' ? 'Passed' : 'Failed');
-                // Pull artifacts for links and then compute gates from contents
-                const artsUrl = `https://api.github.com/repos/${encodeURIComponent(repoOwner)}/${encodeURIComponent(repoName)}/actions/runs/${run.id}/artifacts`;
-                const artResp = await fetch(artsUrl, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
-                if (artResp.ok) {
-                  const arts = await artResp.json();
-                  const map = {};
-                  (arts?.artifacts || []).forEach(a => { map[a.name] = { id: a.id, name: a.name, url: a.archive_download_url }; });
-                  setPublishInfo(prev => ({ ...(prev || {}), artifacts: map }));
-                }
-                // Fold artifacts into gates based on JSON contents
-                try {
-                  const owner = repoOwner; const repo = repoName;
-                  const computed = await foldArtifactsIntoGates({ owner, repo, runId: run.id, token });
-                  setGates(prev => ({ ...prev, ...computed }));
-                } catch { /* ignore */ }
-                return; // stop polling
-              }
+          const run = await broker.sandbox.latestRun({ owner: repoOwner, repo: repoName, workflow: wfFile, since: dispatchTs, token });
+          if (run) {
+            // Expose run link early
+            setPublishInfo(prev => ({ ...(prev || {}), run: { id: run.id, url: run.html_url, status: run.status, conclusion: run.conclusion } }));
+            if (run.status === 'queued') setPublishStatus('Queued');
+            else if (run.status === 'in_progress') setPublishStatus('In progress');
+            else if (run.status === 'completed') {
+              setPublishStatus(run.conclusion === 'success' ? 'Passed' : 'Failed');
+              // Pull artifacts for links and then compute gates from contents
+              try {
+                const arts = await broker.artifacts.list({ owner: repoOwner, repo: repoName, runId: run.id, token });
+                const map = {};
+                (arts || []).forEach(a => { map[a.name] = { id: a.id, name: a.name, url: a.url }; });
+                setPublishInfo(prev => ({ ...(prev || {}), artifacts: map }));
+              } catch {}
+              // Fold artifacts into gates based on JSON contents
+              try {
+                const owner = repoOwner; const repo = repoName;
+                const computed = await foldArtifactsIntoGatesBroker({ owner, repo, runId: run.id, token });
+                setGates(prev => ({ ...prev, ...computed }));
+              } catch { /* ignore */ }
+              return; // stop polling
             }
           }
         } catch { /* ignore and keep polling */ }
@@ -2226,6 +2207,7 @@ export default function App() {
       )}
     </>);
   }
+
 
 
 
