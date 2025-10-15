@@ -39,6 +39,19 @@ npm run dev
 
 The app expects a modern Node runtime; if the command exits immediately, re-check the Node requirement above.
 
+### FrameForge OS Shell
+
+The app now boots into the Workspace Shell (Dock, central Surface, right-side drawers, bottom status bar):
+
+- Dock: Switch between `UI`, `Compiler`, `Sandbox`, and `Publish`.
+- Proposals Drawer: Approve/apply spec diffs (Ctrl/Cmd+P or bottom bar button).
+- Agents Panel: Toggle agent policies (Alt+J or bottom bar).
+- Tools Overlay: View tool/MCP statuses (Alt+T or bottom bar).
+- Run History: Event log with filters (Alt+H or bottom bar).
+- PR Status: Bottom bar pill links to PR or CI reports and mirrors gate status.
+
+Dev flag: set `VITE_FF_DEV_AUTO_APPROVE=true` or `localStorage.FF_DEV_AUTO_APPROVE = 'true'` to auto-approve/apply proposals in local runs.
+
 ### Core features
 
 - **Canvas & Frames**: Drag, resize, and annotate UI frames. Persisted frame title options help standardize naming.

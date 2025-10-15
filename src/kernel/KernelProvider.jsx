@@ -30,7 +30,10 @@ export function KernelProvider({ children }) {
   })();
   const kernel = useMemo(() => createKernel({ user, store: { initialSpec: { ui: loadInitialUi(), logic: { policies: { requireApproval: true } }, data: { rag: { indices: [] } }, theme: {}, overlays: {}, tests: {}, meta: {}, analysis: {} } } }), []);
   useEffect(() => {
-    try { registerExtensions(kernel); } catch {}
+    try {
+      const exts = registerExtensions(kernel);
+      try { kernel.extensions = exts; } catch {}
+    } catch {}
   }, [kernel]);
   useEffect(() => {
     try { window.__ff_kernel_api = createKernelApi(kernel); } catch {}

@@ -13,8 +13,10 @@ export default function RunHistoryPanel() {
     const offF = onFilterChange(() => setFlt(getFilter()));
     const offS = subscribeSampling(() => setSampling(getSamplingOn()));
     const onKey = (e) => { if (e.altKey && (e.key === 'h' || e.key === 'H')) setOpen((v) => !v); };
+    const onToggle = () => setOpen((v) => !v);
     window.addEventListener('keydown', onKey);
-    return () => { off?.(); offF?.(); offS?.(); window.removeEventListener('keydown', onKey); };
+    window.addEventListener('ff:history:toggle', onToggle);
+    return () => { off?.(); offF?.(); offS?.(); window.removeEventListener('keydown', onKey); window.removeEventListener('ff:history:toggle', onToggle); };
   }, []);
   const filtered = useMemo(() => items.filter((e) => matchFilter(e, flt)), [items, flt]);
   const counts = useMemo(() => {

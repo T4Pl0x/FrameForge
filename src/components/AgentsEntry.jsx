@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AgentPanel from './AgentPanel.jsx';
 
 export default function AgentsEntry() {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const onToggle = () => setOpen(v => !v);
+    window.addEventListener('ff:agents:toggle', onToggle);
+    return () => window.removeEventListener('ff:agents:toggle', onToggle);
+  }, []);
   return (
     <>
       <div style={{ position: 'fixed', left: 12, bottom: 12, zIndex: 1100, display: 'flex', gap: 8 }}>
@@ -16,4 +21,3 @@ export default function AgentsEntry() {
     </>
   );
 }
-

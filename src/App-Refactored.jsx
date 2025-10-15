@@ -165,6 +165,35 @@ export default function App() {
     const modelsAbortRef = useRef(null);
   const [showAutomationSettings, setShowAutomationSettings] = useState(false);
   const [automationStatus, setAutomationStatus] = useState('');
+  // Allow other surfaces to open Task Automation settings and focus a field
+  useEffect(() => {
+    const onOpenAutomation = (e) => {
+      try { setShowAutomationSettings(true); } catch {}
+      try { setAutomationStatus('Provide your GitHub details to enable PR creation and status checks.'); } catch {}
+      // Try to focus a relevant input a moment later
+      const field = e?.detail?.focusField;
+      setTimeout(() => {
+        try {
+          if (field === 'repoOwner') document.querySelector('input[placeholder="acme-corp"]').focus();
+          else if (field === 'repoName') document.querySelector('input[placeholder="frameforge"]').focus();
+          else if (field === 'workflowId') document.querySelector('input[placeholder="copilot-refactor.yml"]').focus();
+          else if (field === 'branch') document.querySelector('input[placeholder="main"]').focus();
+          else if (field === 'token') document.querySelector('input[placeholder="ghp_..."]').focus();
+        } catch {}
+      }, 50);
+    };
+    window.addEventListener('ff:automation:open', onOpenAutomation);
+    return () => window.removeEventListener('ff:automation:open', onOpenAutomation);
+  }, []);
+  // Allow other surfaces to open Task Automation settings
+  useEffect(() => {
+    const onOpenAutomation = () => {
+      try { setShowAutomationSettings(true); } catch {}
+      try { setAutomationStatus('Provide your GitHub details to enable PR creation and status checks.'); } catch {}
+    };
+    window.addEventListener('ff:automation:open', onOpenAutomation);
+    return () => window.removeEventListener('ff:automation:open', onOpenAutomation);
+  }, []);
 
     const state = useAppState();
     const {
@@ -443,21 +472,22 @@ export default function App() {
     publishVersionRef.current = generateVersionId();
     setPublishStatus('Queued');
     const dispatchTs = Date.now();
-    const endpoint = `https://api.github.com/repos/${encodeURIComponent(repoOwner)}/${encodeURIComponent(repoName)}/dispatches`;
-    const payload = {
-      event_type: 'frameforge_sandbox',
-      client_payload: {
-        versionId: publishVersionRef.current,
-        options: { runTests: true, runA11y: true, runLint: true, runBuild: true },
-        labels: ['frameforge-sandbox'],
-        meta: {
-          initiator: (typeof localStorage !== 'undefined' && localStorage.getItem('frameforge-user-handle')) || '@user',
-          ticketId: ''
-        }
-      }
-    };
     try {
-      await fetch(endpoint, { method: 'POST', headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      await broker.ci.dispatchRepositoryEvent({
+        owner: repoOwner,
+        repo: repoName,
+        token,
+        event_type: 'frameforge_sandbox',
+        client_payload: {
+          versionId: publishVersionRef.current,
+          options: { runTests: true, runA11y: true, runLint: true, runBuild: true },
+          labels: ['frameforge-sandbox'],
+          meta: {
+            initiator: (typeof localStorage !== 'undefined' && localStorage.getItem('frameforge-user-handle')) || '@user',
+            ticketId: ''
+          }
+        }
+      });
       // Poll for the latest sandbox workflow run
       const wfFile = 'frameforge_sandbox.yml';
       let delay = 2000;
@@ -539,48 +569,38 @@ export default function App() {
     const reports = publishInfo?.artifacts || {};
     const actor = (typeof localStorage !== 'undefined' && localStorage.getItem('frameforge-user-handle')) || 'owner';
     const isOverrideOnly = (!allPass && overrideOk);
-    const payload = isOverrideOnly
+    const event_type = isOverrideOnly ? 'frameforge_override_publish' : 'frameforge_publish';
+    const client_payload = isOverrideOnly
       ? {
-          event_type: 'frameforge_override_publish',
-          client_payload: {
-            versionId,
-            reason: overrideState.reason || '',
-            actor,
-            reports: {
-              tests: reports['tests-report.json']?.url || '',
-              a11y: reports['a11y-report.json']?.url || '',
-              preflight: (publishInfo?.run?.url) || '',
-              lint: reports['lint.json']?.url || '',
-            },
+          versionId,
+          reason: overrideState.reason || '',
+          actor,
+          reports: {
+            tests: reports['tests-report.json']?.url || '',
+            a11y: reports['a11y-report.json']?.url || '',
+            preflight: (publishInfo?.run?.url) || '',
+            lint: reports['lint.json']?.url || '',
           },
         }
       : {
-          event_type: 'frameforge_publish',
-          client_payload: {
-            versionId,
-            artifactId,
-            reports: {
-              testsUrl: reports['tests-report.json']?.url || '',
-              a11yUrl: reports['a11y-report.json']?.url || '',
-              lintUrl: reports['lint.json']?.url || '',
-              buildUrl: (publishInfo?.run?.url) || '',
-              sbomUrl: reports['sbom.json']?.url || '',
-              secretScanUrl: '',
-            },
-            gates,
-            risk: gates.risk || 'low',
-            waivers: Object.entries(preflightWaivers || {}).map(([k, reason]) => ({ id: k, reason, expires: '' })),
-            override: { enabled: Boolean(overrideState.enabled), reason: overrideState.reason || '', expires: overrideState.expires || '', byUser: overrideState.byUserId || '' },
-            labels: ['frameforge-publish'].concat(overrideOk ? ['override-required'] : []).concat(gates.risk ? ['risk-' + gates.risk] : []),
+          versionId,
+          artifactId,
+          reports: {
+            testsUrl: reports['tests-report.json']?.url || '',
+            a11yUrl: reports['a11y-report.json']?.url || '',
+            lintUrl: reports['lint.json']?.url || '',
+            buildUrl: (publishInfo?.run?.url) || '',
+            sbomUrl: reports['sbom.json']?.url || '',
+            secretScanUrl: '',
           },
+          gates,
+          risk: gates.risk || 'low',
+          waivers: Object.entries(preflightWaivers || {}).map(([k, reason]) => ({ id: k, reason, expires: '' })),
+          override: { enabled: Boolean(overrideState.enabled), reason: overrideState.reason || '', expires: overrideState.expires || '', byUser: overrideState.byUserId || '' },
+          labels: ['frameforge-publish'].concat(overrideOk ? ['override-required'] : []).concat(gates.risk ? ['risk-' + gates.risk] : []),
         };
     try {
-      const endpoint = `https://api.github.com/repos/${encodeURIComponent(repoOwner)}/${encodeURIComponent(repoName)}/dispatches`;
-      const resp = await fetch(endpoint, { method: 'POST', headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!resp.ok) {
-        const text = await resp.text();
-        throw new Error(text || `GitHub responded with ${resp.status}`);
-      }
+      await broker.ci.dispatchRepositoryEvent({ owner: repoOwner, repo: repoName, token, event_type, client_payload });
       setChatMessages(prev => ([...prev, createMessage('assistant', `Repository dispatch sent (${isOverrideOnly ? 'frameforge_override_publish' : 'frameforge_publish'}). GitHub will open the PR.`)]));
       setBuildPreviewOpen(false);
     } catch (e) {
@@ -1326,7 +1346,7 @@ export default function App() {
           const repo = refactorAutomation.repoName.trim();
           const workflowFile = (refactorAutomation.workflowId || 'copilot-refactor.yml').trim() || 'copilot-refactor.yml';
           const branch = (refactorAutomation.branch || 'main').trim() || 'main';
-          const endpoint = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/workflows/${encodeURIComponent(workflowFile)}/dispatches`;
+          // moved to broker.ci.dispatchWorkflow
 
           const payload = {
             ref: branch,
@@ -1341,20 +1361,8 @@ export default function App() {
 
           setAutomationStatus(`Dispatching refactor agent for "${task.title}"...`);
 
-          fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${refactorAutomation.token}`,
-              Accept: 'application/vnd.github+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          })
-            .then(async (response) => {
-              if (!response.ok) {
-                const message = await response.text();
-                throw new Error(message || `GitHub responded with ${response.status}`);
-              }
+          broker.ci.dispatchWorkflow({ owner, repo, workflow: workflowFile, branch, inputs: payload.inputs, token: refactorAutomation.token })
+            .then(() => {
               setAutomationStatus(`Refactor agent queued for "${task.title}".`);
               setChatMessages(prev => ([
                 ...prev,

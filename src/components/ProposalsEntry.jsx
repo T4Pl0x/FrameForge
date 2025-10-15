@@ -1,10 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useKernel } from '../kernel/KernelProvider.jsx';
 import ProposalsDrawer from './ProposalsDrawer.jsx';
 
 export default function ProposalsEntry() {
   const kernel = useKernel();
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const onToggle = () => setOpen(v => !v);
+    window.addEventListener('ff:proposals:toggle', onToggle);
+    return () => window.removeEventListener('ff:proposals:toggle', onToggle);
+  }, []);
   const count = useMemo(() => {
     try {
       const arr = kernel.proposals.list ? kernel.proposals.list() : [];
@@ -24,4 +29,3 @@ export default function ProposalsEntry() {
     </>
   );
 }
-

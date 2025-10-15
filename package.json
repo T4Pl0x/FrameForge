@@ -12,7 +12,9 @@
                     "validate:spec":  "node frameforge/scripts/validate-spec.mjs",
                     "spec:migrate":  "node frameforge/scripts/migrate-spec.mjs",
                     "emit:reports":  "node scripts/emit-reports-index.cjs --dir reports --base  $REPORTS_BASE --pr $PR_URL --dashboard $DASH_URL --html ",
-                    "reports:verify":  "node scripts/verify-reports-index.js --url  $REPORTS_INDEX_URL --retries 10 --delayMs 3000 --timeoutMs 5000 --requireKeys reportsUrl,testsReport,a11yReport,lintBuild "
+                    "reports:verify":  "node scripts/verify-reports-index.js --url  $REPORTS_INDEX_URL --retries 10 --delayMs 3000 --timeoutMs 5000 --requireKeys reportsUrl,testsReport,a11yReport,lintBuild ",
+                    "reports:verify:one":  "node scripts/verify-reports-index.js --url  $REPORTS_INDEX_URL --retries 10 --delayMs 3000 --timeoutMs 5000 --requireKeys reportsUrl,testsReport,a11yReport,lintBuild --checkAssets ",
+                    "reports:verify:matrix":  "node scripts/verify-reports-index.js --urls  $REPORTS_INDEX_URLS --retries 10 --delayMs 3000 --timeoutMs 5000 --requireKeys reportsUrl,testsReport,a11yReport,lintBuild --checkAssets "
                 },
     "engines":  {
                     "node":  "\u003e=20.19.0"

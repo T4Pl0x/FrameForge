@@ -228,6 +228,7 @@ Offer actionable layout or UX feedback.`);
   useEffect(() => {
     try {
       localStorage.setItem('frameforge-refactor-automation', JSON.stringify(refactorAutomation));
+      try { window.dispatchEvent(new CustomEvent('ff:automation:updated', { detail: { refactorAutomation } })); } catch {}
     } catch (error) {
       console.warn('Failed to persist refactor automation preferences:', error);
     }

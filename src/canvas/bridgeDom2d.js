@@ -1,4 +1,4 @@
-import { Rect } from './bridge';
+// Note: types in ./bridge (Rect) are TS-only; no runtime import needed.
 
 export class Dom2dSurface {
   constructor(canvas) { this.canvas = canvas; }

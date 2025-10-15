@@ -12,8 +12,14 @@ export function createUiExtension() {
       analyze() {
         const spec = host.readSpec();
         const notes = [];
-        if (!spec?.ui || !Array.isArray(spec?.ui?.frames)) {
+        const frames = Array.isArray(spec?.ui?.frames) ? spec.ui.frames : [];
+        if (frames.length === 0) {
           notes.push({ level: 'info', message: 'No frames yet' });
+        } else {
+          const untitled = frames.filter(f => !f.title || !String(f.title).trim()).map(f => (f.id || '').slice(0,6));
+          const components = frames.reduce((acc, f) => acc + (Array.isArray(f.nodes) ? f.nodes.length : 0), 0);
+          notes.push({ level: 'info', message: `Frames: ${frames.length}, Components: ${components}` });
+          if (untitled.length) notes.push({ level: 'warn', message: `Untitled frames: ${untitled.join(', ')}` });
         }
         // propose to update analysis.json (proposal-only)
         const patch = [{ op: 'replace', path: '/analysis/notes', value: notes }];
@@ -25,4 +31,3 @@ export function createUiExtension() {
 
   return { register, manifest };
 }
-

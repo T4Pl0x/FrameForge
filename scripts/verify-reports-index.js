@@ -1,91 +1,112 @@
 #!/usr/bin/env node
 /**
- * Verify that a public CDN reports index.json is reachable and sane.
+ * Verify one or more CDN reports index.json endpoints and (optionally)
+ * check individual report asset URLs return 200 (HEAD preferred, fallback GET).
  *
- * Usage:
+ * Examples:
  *  node scripts/verify-reports-index.js \
- *    --url https://cdn.example.com/builds/$BUILD_ID/reports/index.json \
+ *    --urls https://cdn-a.example.com/builds/$BUILD/reports/index.json,https://cdn-b.example.com/builds/$BUILD/reports/index.json \
  *    --retries 10 --delayMs 3000 --timeoutMs 5000 \
- *    --requireKeys reportsUrl testsReport a11yReport lintBuild
- *
- * Exits non-zero on error.
+ *    --requireKeys reportsUrl,testsReport,a11yReport,lintBuild \
+ *    --checkAssets
  */
+
 const { argv, exit } = process;
 
 function arg(name, def) {
   const i = argv.indexOf(`--${name}`);
   return i > -1 ? argv[i + 1] : def;
 }
-function listArg(name) {
+function list(name) {
   const v = arg(name, "");
   return v ? v.split(",").map((s) => s.trim()).filter(Boolean) : [];
 }
+const urls = list("urls");
+const singleUrl = arg("url", "");
+if (!urls.length && singleUrl) urls.push(singleUrl);
 
-const url = arg("url");
 const retries = parseInt(arg("retries", "8"), 10);
 const delayMs = parseInt(arg("delayMs", "2500"), 10);
 const timeoutMs = parseInt(arg("timeoutMs", "4000"), 10);
-const requireKeys = listArg("requireKeys").length
-  ? listArg("requireKeys")
-  : (argv.includes("--requireKeys") ? [] : ["reportsUrl"]); // default sanity
+const requireKeys = list("requireKeys").length ? list("requireKeys") : ["reportsUrl"];
+const checkAssets = argv.includes("--checkAssets");
 
-if (!url) {
-  console.error("[verify-reports-index] --url is required");
+if (!urls.length) {
+  console.error("[verify-reports-index] --urls or --url is required");
   exit(2);
 }
 
 async function fetchWithTimeout(resource, options = {}) {
-  const { timeout = timeoutMs, ...rest } = options;
+  const to = options.timeout ?? timeoutMs;
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
+  const t = setTimeout(() => controller.abort(), to);
   try {
-    const res = await fetch(resource, { ...rest, signal: controller.signal, cache: "no-store" });
-    return res;
+    return await fetch(resource, { ...options, signal: controller.signal, cache: 'no-store' });
   } finally {
-    clearTimeout(id);
+    clearTimeout(t);
   }
 }
 
-function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-(async function main() {
+async function verifyOne(url) {
   let lastErr;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const res = await fetchWithTimeout(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const type = res.headers.get("content-type") || "";
-      if (!type.includes("application/json")) {
-        // not fatal—some CDNs don’t set proper type
-        console.warn(`[verify-reports-index] warning: unexpected content-type: ${type}`);
-      }
-      const data = await res.json().catch(() => { throw new Error("Invalid JSON body"); });
+      const body = await res.json().catch(() => {
+        throw new Error('Invalid JSON body');
+      });
 
-      // Basic shape checks
       for (const k of requireKeys) {
-        if (!(k in data) || !String(data[k]).trim()) {
-          throw new Error(`Missing required key: ${k}`);
+        if (!(k in body) || !String(body[k]).trim()) throw new Error(`Missing required key: ${k}`);
+      }
+      if (body.reportsUrl && !/^https?:\/\//i.test(String(body.reportsUrl))) {
+        throw new Error(`reportsUrl is not absolute: ${body.reportsUrl}`);
+      }
+
+      if (checkAssets) {
+        const assetKeys = ['testsReport', 'a11yReport', 'lintBuild'].filter((k) => body[k]);
+        for (const k of assetKeys) {
+          const u = String(body[k]);
+          let ok = false;
+          try {
+            const head = await fetchWithTimeout(u, { method: 'HEAD' });
+            ok = head.ok;
+          } catch {}
+          if (!ok) {
+            const get = await fetchWithTimeout(u, { method: 'GET' });
+            ok = get.ok;
+          }
+          if (!ok) throw new Error(`Asset ${k} not reachable: ${u}`);
         }
       }
-      // Optional: quick URL sanity for reportsUrl
-      if (data.reportsUrl && !/^https?:\/\//i.test(String(data.reportsUrl))) {
-        throw new Error(`reportsUrl is not absolute: ${data.reportsUrl}`);
-      }
 
-      console.log(`[verify-reports-index] OK on attempt ${attempt}: ${url}`);
-      console.log(`[verify-reports-index] keys: ${Object.keys(data).join(", ")}`);
-      return;
+      console.log(`[verify-reports-index] OK: ${url}`);
+      return { ok: true, data: body };
     } catch (err) {
       lastErr = err;
       const backoff = Math.min(delayMs * attempt, 10000);
-      console.warn(`[verify-reports-index] attempt ${attempt}/${retries} failed: ${err.message}`);
-      if (attempt < retries) {
-        await sleep(backoff);
-        continue;
-      }
+      console.warn(`[verify-reports-index] ${url} attempt ${attempt}/${retries} failed: ${err.message}`);
+      if (attempt < retries) await sleep(backoff);
     }
   }
-  console.error(`[verify-reports-index] FAILED after ${retries} attempts: ${lastErr?.message || lastErr}`);
+  return { ok: false, error: lastErr };
+}
+
+(async function main() {
+  let allOk = true;
+  for (const u of urls) {
+    const r = await verifyOne(u);
+    if (!r.ok) {
+      allOk = false;
+      console.error(`[verify-reports-index] FAILED for ${u}: ${r.error?.message || r.error}`);
+    }
+  }
+  exit(allOk ? 0 : 1);
+})().catch((e) => {
+  console.error(e);
   exit(1);
-})().catch((e) => { console.error(e); exit(1); });
+});
 

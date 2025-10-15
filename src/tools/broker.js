@@ -5,6 +5,48 @@ for (const t of registry.tools) toolMap.set(t.name, t);
 
 const GH_API = 'https://api.github.com';
 
+// Simple token-bucket limiter for GH calls (self-heal/backoff)
+function createLimiter({ rpm = 60, burst = 10 } = {}) {
+  const capacity = Math.max(burst, Math.ceil(rpm / 10));
+  let tokens = capacity;
+  let lastRefill = Date.now();
+  const refillInterval = 60000; // 1 min
+  function refill() {
+    const now = Date.now();
+    const elapsed = now - lastRefill;
+    if (elapsed > 0) {
+      const add = Math.floor((elapsed / refillInterval) * rpm);
+      if (add > 0) {
+        tokens = Math.min(capacity, tokens + add);
+        lastRefill = now;
+      }
+    }
+  }
+  async function wait() {
+    for (;;) {
+      refill();
+      if (tokens > 0) { tokens -= 1; return; }
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+  return { wait };
+}
+
+const limiter = createLimiter({ rpm: 300, burst: 30 });
+
+async function limitedFetch(url, opts, { retries = 2, backoffMs = 800 } = {}) {
+  await limiter.wait();
+  for (let i = 0; i <= retries; i++) {
+    const res = await fetch(url, opts);
+    if (res.status === 429 || res.status === 403) {
+      await new Promise(r => setTimeout(r, backoffMs * (i + 1)));
+      continue;
+    }
+    return res;
+  }
+  return fetch(url, opts);
+}
+
 export async function call(toolName, action, payload) {
   const entry = toolMap.get(toolName);
   if (!entry) throw new Error(`Unknown tool: ${toolName}`);
@@ -17,7 +59,7 @@ export async function call(toolName, action, payload) {
 }
 
 async function ghGET(path, token) {
-  const r = await fetch(`${GH_API}${path}`, {
+  const r = await limitedFetch(`${GH_API}${path}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
   });
   if (!r.ok) throw new Error(`${path} -> ${r.status}`);
@@ -26,7 +68,7 @@ async function ghGET(path, token) {
 
 async function downloadArtifactJsonZip(owner, repo, artifactId, token) {
   try {
-    const r = await fetch(`${GH_API}/repos/${owner}/${repo}/actions/artifacts/${artifactId}/zip`, {
+    const r = await limitedFetch(`${GH_API}/repos/${owner}/${repo}/actions/artifacts/${artifactId}/zip`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
     });
     if (!r.ok) return null;
@@ -41,6 +83,25 @@ async function downloadArtifactJsonZip(owner, repo, artifactId, token) {
 }
 
 export const broker = {
+  health: {
+    async publish({ token }) {
+      try {
+        if (!token) return { status: 'unknown' };
+        const r = await limitedFetch(`${GH_API}/rate_limit`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
+        if (!r.ok) return { status: r.status === 401 ? 'unauthorized' : (r.status === 403 ? 'forbidden' : 'offline') };
+        return { status: 'online' };
+      } catch { return { status: 'offline' }; }
+    },
+    async sandbox({ owner, repo, workflow = 'frameforge_sandbox.yml', token }) {
+      try {
+        if (!owner || !repo || !token) return { status: 'unknown' };
+        const url = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/workflows/${encodeURIComponent(workflow)}/runs?per_page=1`;
+        const r = await ghGET(url, token);
+        const ok = Array.isArray(r?.workflow_runs);
+        return { status: ok ? 'online' : 'offline' };
+      } catch { return { status: 'offline' }; }
+    }
+  },
   sandbox: {
     async latestRun({ owner, repo, workflow, branch, event = 'repository_dispatch', since, token }) {
       const params = new URLSearchParams();
@@ -55,6 +116,34 @@ export const broker = {
       const run = filtered[0] || runs[0] || null;
       return run || null;
     },
+  },
+  ci: {
+    async dispatchRepositoryEvent({ owner, repo, token, event_type, client_payload }) {
+      const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/dispatches`;
+      const r = await fetch(`${GH_API}${path}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_type, client_payload })
+      });
+      if (!r.ok) {
+        const text = await r.text().catch(() => '');
+        throw new Error(text || `${path} -> ${r.status}`);
+      }
+      return { ok: true };
+    },
+    async dispatchWorkflow({ owner, repo, workflow, branch, inputs, token }) {
+      const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/workflows/${encodeURIComponent(workflow)}/dispatches`;
+      const r = await fetch(`${GH_API}${path}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: branch, inputs })
+      });
+      if (!r.ok) {
+        const text = await r.text().catch(() => '');
+        throw new Error(text || `${path} -> ${r.status}`);
+      }
+      return { ok: true };
+    }
   },
   artifacts: {
     async list({ owner, repo, runId, token }) {
@@ -71,7 +160,7 @@ export const broker = {
   vcs: {
     async findPRForHead({ owner, repo, head, token }) {
       const prs = await ghGET(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?head=${encodeURIComponent(head)}&state=all&per_page=1`, token);
-      return Array.isArray(prs) && prs.length ? prs[0] : null;
+    return Array.isArray(prs) && prs.length ? prs[0] : null;
     }
   }
 };
