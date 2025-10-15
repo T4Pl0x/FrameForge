@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { getRunHistory, subscribe, startRunHistoryTap, getFilter, setFilter, subscribeFilter, getSamplingOn, subscribeSampling } from '../state/runHistory.js';
+import { getRunHistory, subscribe, startRunHistoryTap, getSamplingOn, subscribeSampling } from '../state/runHistory.js';
+import { getFilter, setFilter, onFilterChange, matchFilter } from '../state/runHistoryFilter.js';
 
 export default function RunHistoryPanel() {
   const [open, setOpen] = useState(false);
@@ -9,22 +10,13 @@ export default function RunHistoryPanel() {
   useEffect(() => {
     startRunHistoryTap();
     const off = subscribe(() => setItems(getRunHistory()));
-    const offF = subscribeFilter(() => setFlt(getFilter()));
+    const offF = onFilterChange(() => setFlt(getFilter()));
     const offS = subscribeSampling(() => setSampling(getSamplingOn()));
     const onKey = (e) => { if (e.altKey && (e.key === 'h' || e.key === 'H')) setOpen((v) => !v); };
     window.addEventListener('keydown', onKey);
     return () => { off?.(); offF?.(); offS?.(); window.removeEventListener('keydown', onKey); };
   }, []);
-  const filtered = useMemo(() => {
-    const m = (evt, f) => {
-      if (f === 'all') return true;
-      if (f === 'proposal') return evt.type?.startsWith('proposal:');
-      if (f === 'apply') return evt.type?.startsWith('apply.');
-      if (f === 'gate') return evt.type?.startsWith('gate.');
-      return true;
-    };
-    return items.filter((e) => m(e, flt));
-  }, [items, flt]);
+  const filtered = useMemo(() => items.filter((e) => matchFilter(e, flt)), [items, flt]);
   const counts = useMemo(() => {
     const all = items.length;
     const p = items.filter((e) => e.type?.startsWith('proposal:')).length;

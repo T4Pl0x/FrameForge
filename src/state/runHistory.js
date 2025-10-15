@@ -23,6 +23,7 @@ let sampleCounter = 0;
 let samplingOn = false;
 const samplingSubs = new Set();
 export function getSamplingOn() { return samplingOn; }
+export const isSamplingOn = getSamplingOn;
 export function subscribeSampling(fn) { samplingSubs.add(fn); return () => samplingSubs.delete(fn); }
 function setSampling(on) {
   if (on === samplingOn) return;
@@ -64,4 +65,3 @@ function onEvent(e) {
   if (buf.length > MAX) buf.splice(0, buf.length - MAX);
   notify();
 }
-
