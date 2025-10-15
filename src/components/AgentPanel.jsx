@@ -1,9 +1,20 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useKernel } from '../kernel/KernelProvider.jsx';
+import { getIndexStatus } from '../tools/ragAdapters.js';
 
 export default function AgentPanel({ open, onClose }) {
   const kernel = useKernel();
   const policies = useMemo(() => kernel.store.get('logic')?.policies || { requireApproval: true }, [kernel]);
+  const [indexHealth, setIndexHealth] = useState('unknown');
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const s = await getIndexStatus();
+      if (mounted) setIndexHealth(s.status);
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const proposeToggle = (key, value) => {
     const patch = [{ op: 'replace', path: `/logic/policies/${key}`, value }];
@@ -29,9 +40,9 @@ export default function AgentPanel({ open, onClose }) {
             <input type="checkbox" checked={!!policies.requireApproval} onChange={(e) => proposeToggle('requireApproval', e.target.checked)} />
             <span>Require approval for changes</span>
           </label>
+          <div style={{ fontSize: 12, color: '#6b7280', marginTop: 8 }}>Index health: <strong style={{ color: indexHealth === 'green' ? '#059669' : indexHealth === 'red' ? '#dc2626' : '#6b7280' }}>{indexHealth}</strong></div>
         </div>
       </div>
     </div>
   );
 }
-

@@ -1,0 +1,7 @@
+{
+  "tools": [
+    { "name": "rag_indexer", "permissions": ["index", "status"], "rateLimitPerMin": 30 },
+    { "name": "search_docs", "permissions": ["search"], "rateLimitPerMin": 60 },
+    { "name": "sandbox_runner", "permissions": ["run"], "rateLimitPerMin": 10 }
+  ]
+}
