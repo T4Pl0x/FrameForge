@@ -21,7 +21,7 @@ export function createKernelApi(kernel) {
   function subscribe(pattern, fn) {
     const toRegex = (pat) => new RegExp('^' + pat.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
     const rx = toRegex(pattern);
-    const handler = (name) => (payload) => { if (rx.test(name)) fn(payload); };
+    const handler = (name) => (payload) => { if (rx.test(name)) fn({ type: name, ...payload }); };
     const off = [];
     const events = [
       'proposal:submitted',
@@ -34,5 +34,8 @@ export function createKernelApi(kernel) {
     for (const ev of events) off.push(kernel.bus.on(ev, handler(ev)));
     return () => off.forEach((f) => { try { f(); } catch {} });
   }
-  return { submit, approve, apply, listProposals, events: { subscribe } };
+  function publish(name, payload) {
+    try { kernel.bus.emit(name, { type: name, ...payload }); } catch {}
+  }
+  return { submit, approve, apply, listProposals, events: { subscribe, publish } };
 }

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import { createKernel } from '@frameforge/kernel';
 import { registerExtensions } from '../extensionHost.js';
+import { createKernelApi } from '../../packages/kernel/src/api.js';
 
 const KernelContext = createContext(null);
 
@@ -30,6 +31,9 @@ export function KernelProvider({ children }) {
   const kernel = useMemo(() => createKernel({ user, store: { initialSpec: { ui: loadInitialUi(), logic: { policies: { requireApproval: true } }, data: { rag: { indices: [] } }, theme: {}, overlays: {}, tests: {}, meta: {}, analysis: {} } } }), []);
   useEffect(() => {
     try { registerExtensions(kernel); } catch {}
+  }, [kernel]);
+  useEffect(() => {
+    try { window.__ff_kernel_api = createKernelApi(kernel); } catch {}
   }, [kernel]);
   // Dev auto-approve
   useEffect(() => {

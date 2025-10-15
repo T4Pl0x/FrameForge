@@ -1,6 +1,7 @@
 import { createEventBus } from './eventBus.js';
 import { createSpecStore } from './specStore.js';
 import { validatePatch } from './jsonPatch.js';
+import { ERR } from './errors.js';
 
 function djb2Hash(str) {
   let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h) + str.charCodeAt(i);
@@ -70,7 +71,7 @@ export function createKernel(options = {}) {
     const hasGeom = (p.patch || []).some(isGeometryPatch);
     if (hasGeom && actorName !== '@frameforge/ext-ui') {
       p.status = 'invalid';
-      p.errors = ['GEOMETRY_WRITE_FORBIDDEN: Only @frameforge/ext-ui may propose geometry/layout changes'];
+      p.errors = [ERR.GEOMETRY_WRITE_FORBIDDEN + ': Only @frameforge/ext-ui may propose geometry/layout changes'];
       return { ok: false, errors: p.errors };
     }
     // AI provenance strictness
@@ -79,7 +80,7 @@ export function createKernel(options = {}) {
       const inputsSha = p?.provenance?.inputs_sha256;
       if (!modelId || !inputsSha) {
         p.status = 'invalid';
-        p.errors = ['PROVENANCE_INCOMPLETE: AI proposals must include model.id and inputs_sha256'];
+        p.errors = [ERR.PROVENANCE_INCOMPLETE + ': AI proposals must include model.id and inputs_sha256'];
         return { ok: false, errors: p.errors };
       }
     }
@@ -97,7 +98,7 @@ export function createKernel(options = {}) {
     if (!policy.canApprove(actor, p.target)) {
       const need = 'approver';
       const err = new Error('Forbidden: approve');
-      err.code = 403; err.need = need; err.path = p.target?.file || 'unknown';
+      err.code = ERR.RBAC_FORBIDDEN; err.need = need; err.path = p.target?.file || 'unknown'; err.proposal_id = id; err.trace_id = p.trace_id;
       throw err;
     }
     p.status = 'approved';
@@ -112,7 +113,7 @@ export function createKernel(options = {}) {
     if (!policy.canApply(actor, p.target)) {
       const need = 'approver';
       const err = new Error('Forbidden: apply');
-      err.code = 403; err.need = need; err.path = p.target?.file || 'unknown';
+      err.code = ERR.RBAC_FORBIDDEN; err.need = need; err.path = p.target?.file || 'unknown'; err.proposal_id = id; err.trace_id = p.trace_id;
       throw err;
     }
     if (override) {
@@ -128,7 +129,7 @@ export function createKernel(options = {}) {
       const isOwner = roles.includes('owner');
       if (now > exp && !isOwner) {
         const err = new Error('Override expired');
-        err.code = 403; err.need = 'owner'; err.path = (ovBundle.scope?.file) || p.target?.file || 'unknown';
+        err.code = ERR.OVERRIDE_EXPIRED; err.need = 'owner'; err.path = (ovBundle.scope?.file) || p.target?.file || 'unknown'; err.proposal_id = id; err.trace_id = p.trace_id;
         throw err;
       }
     }

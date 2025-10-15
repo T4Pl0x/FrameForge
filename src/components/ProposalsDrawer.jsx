@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useKernel } from '../kernel/KernelProvider.jsx';
 import { createKernelApi } from '../../packages/kernel/src/api.js';
 import OverrideForm from './OverrideForm.jsx';
+import { toastOK, toastKernelError } from '../ui/toast.js';
 
 function summarize(p) {
   const file = p?.target?.file || 'ui.json';
@@ -90,13 +91,10 @@ export default function ProposalsDrawer({ open, onClose }) {
                     <OverrideForm
                       defaultScope={{ file: (p?.target?.file) || 'spec/ui.json', path: p?.target?.path || '/' }}
                       onSubmit={async (bundle) => {
-                        try {
-                          await api.approve(p.id, currentUser.id);
-                        } catch {}
-                        try {
-                          await api.apply(p.id, { override: { scope: bundle.scope, reason: bundle.reason, approved_by: currentUser.id, expires_at: bundle.expires_at }, user: currentUser });
-                          reload();
-                        } catch (e) { setError(e?.message || String(e)); }
+                        try { await api.approve(p.id, currentUser.id); toastOK('Approved.'); }
+                        catch (e) { toastKernelError(e); }
+                        try { await api.apply(p.id, { override: { scope: bundle.scope, reason: bundle.reason, approved_by: currentUser.id, expires_at: bundle.expires_at }, user: currentUser }); toastOK('Applied with override.'); reload(); }
+                        catch (e) { toastKernelError(e); }
                       }}
                     />
                   </div>
@@ -105,10 +103,10 @@ export default function ProposalsDrawer({ open, onClose }) {
                   <button type="button" onClick={() => { try { kernel.proposals.reject(p.id, { reason: 'dismissed' }); } catch (e) { setError(e?.message || String(e)); } }}>
                     Dismiss
                   </button>
-                  <button type="button" onClick={() => { try { api.approve(p.id, currentUser.id); } catch (e) { setError(e?.message || String(e)); } }} disabled={p.status !== 'ready' && p.status !== 'submitted'}>
+                  <button type="button" onClick={() => { try { api.approve(p.id, currentUser.id); toastOK('Approved.'); } catch (e) { toastKernelError(e); } }} disabled={p.status !== 'ready' && p.status !== 'submitted'}>
                     Approve
                   </button>
-                  <button type="button" onClick={() => { try { api.apply(p.id, { user: currentUser }); } catch (e) { setError(e?.message || String(e)); } }} disabled={p.status !== 'approved'}>
+                  <button type="button" onClick={() => { try { api.apply(p.id, { user: currentUser }); toastOK('Applied.'); } catch (e) { toastKernelError(e); } }} disabled={p.status !== 'approved'}>
                     Apply
                   </button>
                 </div>

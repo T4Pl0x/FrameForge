@@ -5,6 +5,8 @@ import { KernelProvider } from './kernel/KernelProvider.jsx'
 import AgentsEntry from './components/AgentsEntry.jsx'
 import ProposalsEntry from './components/ProposalsEntry.jsx'
 import GhostLayer from './components/GhostLayer.jsx'
+import Toasts from './components/Toasts.jsx'
+import RunHistoryPanel from './components/RunHistoryPanel.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -13,6 +15,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <AgentsEntry />
       <ProposalsEntry />
       <GhostLayer />
+      <RunHistoryPanel />
+      <Toasts />
     </KernelProvider>
   </React.StrictMode>
 )
