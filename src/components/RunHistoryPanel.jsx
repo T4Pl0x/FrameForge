@@ -41,9 +41,14 @@ export default function RunHistoryPanel() {
             <div style={{ fontSize: 12, opacity: .7, padding: 8 }}>No recent events.</div>
           ) : filtered.map((e, i) => (
             <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <code style={{ fontSize: 12 }}>{e.type}</code>
-                <span style={{ fontSize: 11, opacity: .7 }}>{new Date(e.ts).toLocaleTimeString()}</span>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {e.details?.publishInfo?.reportsUrl && (
+                    <a href={e.details.publishInfo.reportsUrl} target="_blank" rel="noreferrer" style={{ fontSize: 11, textDecoration: 'underline' }}>Reports</a>
+                  )}
+                  <span style={{ fontSize: 11, opacity: .7 }}>{new Date(e.ts).toLocaleTimeString()}</span>
+                </div>
               </div>
               <div style={{ fontSize: 12, marginTop: 4 }}>
                 {e.status && <div>status: <code>{e.status}</code></div>}

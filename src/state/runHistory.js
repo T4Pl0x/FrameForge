@@ -60,7 +60,7 @@ function onEvent(e) {
     keep = sampleCounter === 0;
   }
   if (!keep) return;
-  const evt = { ts: new Date().toISOString(), type: e.type, trace_id: e.trace_id, proposal_id: e.proposal_id, status: e.status, target: e.target };
+  const evt = { ts: new Date().toISOString(), type: e.type, trace_id: e.trace_id, proposal_id: e.proposal_id, status: e.status, target: e.target, details: e.details };
   buf.push(evt);
   if (buf.length > MAX) buf.splice(0, buf.length - MAX);
   notify();

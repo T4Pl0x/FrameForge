@@ -1,9 +1,14 @@
 import { broker } from '../../tools/broker.js';
+import { pollPublishInfo } from '../publish/pollPublishInfo.js';
 
-export async function evaluateGates({ owner, repo, runId, token, trace_id, publishInfo }) {
+export async function evaluateGates({ owner, repo, runId, token, trace_id, publishInfo, buildId, buildBaseUrl, prUrl, dashboardUrl }) {
   const kapi = (typeof window !== 'undefined' && window.__ff_kernel_api) || null;
   const tr = trace_id || ('tr_gate_' + Math.random().toString(36).slice(2, 8));
   try { kapi?.events?.publish('gate.started', { type: 'gate.started', trace_id: tr, status: 'unknown', target: { file: 'reports' } }); } catch {}
+  let publishInfoData = publishInfo;
+  try {
+    publishInfoData = await pollPublishInfo({ buildId: buildId || runId, buildBaseUrl, prUrl, dashboardUrl });
+  } catch { /* ignore */ }
   const tests = await broker.artifacts.getJson({ owner, repo, runId, name: 'tests-report.json', token }).catch(() => null);
   const a11y = await broker.artifacts.getJson({ owner, repo, runId, name: 'a11y-report.json', token }).catch(() => null);
   const lb = await broker.artifacts.getJson({ owner, repo, runId, name: 'lint-build.json', token }).catch(() => null);
@@ -20,7 +25,7 @@ export async function evaluateGates({ owner, repo, runId, token, trace_id, publi
   if (warnCount > 100) gates.risk = 'high'; else if (warnCount > 20) gates.risk = 'medium';
 
   const allPass = (gates.tests === 'pass' && gates.a11y === 'pass' && gates.lintBuild === 'pass');
-  const publishInfoData = publishInfo || { reportsUrl: `https://github.com/${owner}/${repo}/actions/runs/${runId}` };
+  publishInfoData = publishInfoData || { reportsUrl: `https://github.com/${owner}/${repo}/actions/runs/${runId}` };
   if (allPass) {
     const details = {
       tests: { passed: tests?.summary?.passed ?? 0, failed: testsFailed },
