@@ -4,6 +4,7 @@ import App from './App-Refactored.jsx'
 import { KernelProvider } from './kernel/KernelProvider.jsx'
 import AgentsEntry from './components/AgentsEntry.jsx'
 import ProposalsEntry from './components/ProposalsEntry.jsx'
+import GhostLayer from './components/GhostLayer.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -11,6 +12,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <App />
       <AgentsEntry />
       <ProposalsEntry />
+      <GhostLayer />
     </KernelProvider>
   </React.StrictMode>
 )

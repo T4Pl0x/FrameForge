@@ -3,5 +3,12 @@
   "version": 1,
   "app": "FrameForge OS",
   "createdAt": "",
-  "audit": []
+  "audit": [],
+  "specVersion": "1.0.0",
+  "files": {
+    "ui.json": { "$schema": "https://frameforge.dev/schema/ui-1.0.0.json", "version": "1.0.0" },
+    "logic.json": { "$schema": "https://frameforge.dev/schema/logic-1.0.0.json", "version": "1.0.0" },
+    "data.json": { "$schema": "https://frameforge.dev/schema/data-1.0.0.json", "version": "1.0.0" },
+    "analysis.json": { "$schema": "https://frameforge.dev/schema/analysis-1.0.0.json", "version": "1.0.0" }
+  }
 }

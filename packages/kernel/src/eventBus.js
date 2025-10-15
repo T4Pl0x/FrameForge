@@ -1,5 +1,6 @@
 export function createEventBus() {
   const listeners = new Map();
+  const any = new Map();
 
   function on(event, fn) {
     if (!listeners.has(event)) listeners.set(event, new Set());
@@ -22,4 +23,3 @@ export function createEventBus() {
 
   return { on, off, emit };
 }
-

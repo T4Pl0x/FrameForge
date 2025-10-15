@@ -45,10 +45,11 @@ export function createKernel(options = {}) {
     const meta = metadata || {};
     const prov = provenance || meta.provenance || {};
     const now = new Date().toISOString();
-    const rec = { id, target, patch, rationale: rationale || '', metadata: meta, provenance: prov, created_at: now, status: pre.ok ? 'submitted' : 'invalid', errors: pre.errors || [] };
+    const trace_id = randomId('tr_');
+    const rec = { id, target, patch, rationale: rationale || '', metadata: meta, provenance: prov, created_at: now, status: pre.ok ? 'submitted' : 'invalid', errors: pre.errors || [], trace_id };
     if (idempotencyKey) {
       const hit = idempotency.get(idempotencyKey);
-      const ttlMs = 5 * 60 * 1000;
+      const ttlMs = 24 * 60 * 60 * 1000; // 24h TTL
       if (hit && (Date.now() - hit.ts < ttlMs)) {
         return hit.id; // duplicate
       }
@@ -56,7 +57,7 @@ export function createKernel(options = {}) {
       idempotency.set(idempotencyKey, { id, ts: Date.now() });
     }
     proposals.set(id, rec);
-    bus.emit('proposal:submitted', { id, target });
+    bus.emit('proposal:submitted', { proposal_id: id, target, status: rec.status, trace_id });
     return id;
   }
 
@@ -84,6 +85,8 @@ export function createKernel(options = {}) {
     }
     p.status = v.ok ? 'ready' : 'invalid';
     p.errors = v.errors;
+    const payload = { proposal_id: id, target: p.target, status: p.status, trace_id: p.trace_id };
+    if (p.status === 'invalid') bus.emit('proposal:rejected', payload);
     return { ok: v.ok, errors: v.errors };
   }
 
@@ -99,7 +102,7 @@ export function createKernel(options = {}) {
     }
     p.status = 'approved';
     p.approvedBy = by || actor?.id || 'system';
-    bus.emit('proposal:approved', { id });
+    bus.emit('proposal:approved', { proposal_id: id, target: p.target, status: p.status, trace_id: p.trace_id });
   }
 
   function apply(id, { user } = {}) {
@@ -111,6 +114,19 @@ export function createKernel(options = {}) {
       const err = new Error('Forbidden: apply');
       err.code = 403; err.need = need; err.path = p.target?.file || 'unknown';
       throw err;
+    }
+    // Owner override expiry enforcement
+    const override = p?.metadata?.override;
+    if (override && override.expires_at) {
+      const exp = new Date(override.expires_at).getTime();
+      const now = Date.now();
+      const roles = actor?.roles || [];
+      const isOwner = roles.includes('owner');
+      if (now > exp && !isOwner) {
+        const err = new Error('Override expired');
+        err.code = 403; err.need = 'owner'; err.path = (override.scope?.file) || p.target?.file || 'unknown';
+        throw err;
+      }
     }
     const result = store.apply(p.patch);
     if (!result.ok) throw new Error('apply failed');
@@ -130,13 +146,14 @@ export function createKernel(options = {}) {
         applied_at: new Date().toISOString(),
         model: p?.provenance?.model || null,
         inputs_sha256: p?.provenance?.inputs_sha256 || null,
+        override: p?.metadata?.override || null,
       };
       // Append to meta.audit
       const patch = [{ op: 'add', path: '/meta/audit/-', value: auditEntry }];
       store.apply(patch);
-      bus.emit('apply.succeeded', { id, trace_id, commit, state_hash });
+      bus.emit('apply.succeeded', { proposal_id: id, trace_id, commit, state_hash, target: p.target, status: p.status });
     } catch { /* ignore audit errors */ }
-    bus.emit('proposal:applied', { id });
+    bus.emit('proposal:applied', { proposal_id: id, target: p.target, status: p.status, trace_id: p.trace_id });
     bus.emit('spec:changed', store.snapshot());
     return store.snapshot();
   }
@@ -162,6 +179,19 @@ export function createKernel(options = {}) {
     applyProposal: (id, ctx) => apply(id, ctx || {}),
     listProposals: (st) => list(st),
   };
+
+  // Idempotency GC
+  setInterval(() => {
+    const ttlMs = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    let evicted = 0;
+    for (const [key, rec] of Array.from(idempotency.entries())) {
+      if (now - rec.ts > ttlMs) { idempotency.delete(key); evicted++; }
+    }
+    if (evicted) {
+      try { console.debug('[kernel] idempotency_gc_evicted', evicted); } catch {}
+    }
+  }, 15 * 60 * 1000);
 
   return { store, proposals: { propose, preflight, approve, apply, reject, list }, bus, host, policy };
 }

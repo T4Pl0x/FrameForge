@@ -12,4 +12,4 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run validate:spec
-
+      - run: npm run spec:migrate -- --from $SPEC_FROM --to $SPEC_TO --dry-run
