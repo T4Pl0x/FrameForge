@@ -1,0 +1,33 @@
+{
+  "$id": "https://frameforge.dev/schema/logic-1.0.0.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["agents", "policies"],
+  "properties": {
+    "agents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "capabilities"],
+        "properties": {
+          "id": {"type": "string"},
+          "capabilities": {"type": "array", "items": {"type": "string"}},
+          "rag": {
+            "type": "object",
+            "properties": {
+              "indices": {"type": "array", "items": {"type": "string"}},
+              "reranker": {"type": "string"},
+              "topK": {"type": "integer", "minimum": 1}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "policies": {"type": "object", "additionalProperties": true},
+    "openQuestions": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}
+

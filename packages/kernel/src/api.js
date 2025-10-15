@@ -10,8 +10,8 @@ export function createKernelApi(kernel) {
     kernel.proposals.approve(proposalId, { by: approverId, user: { id: approverId, roles: ['approver'] } });
     return { ok: true };
   }
-  function apply(proposalId) {
-    const snap = kernel.proposals.apply(proposalId, {});
+  function apply(proposalId, opts) {
+    const snap = kernel.proposals.apply(proposalId, { override: opts?.override, user: opts?.user });
     const state_hash = typeof JSON !== 'undefined' ? (JSON.stringify(snap.spec).length.toString(16)) : '';
     return { commit: 'c_api', state_hash };
   }
@@ -36,4 +36,3 @@ export function createKernelApi(kernel) {
   }
   return { submit, approve, apply, listProposals, events: { subscribe } };
 }
-

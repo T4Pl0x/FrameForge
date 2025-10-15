@@ -1,0 +1,28 @@
+{
+  "$id": "https://frameforge.dev/schema/ui-1.0.0.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["frames"],
+  "properties": {
+    "frames": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "x", "y", "w", "h"],
+        "properties": {
+          "id": {"type": "string"},
+          "type": {"type": "string"},
+          "x": {"type": "number"},
+          "y": {"type": "number"},
+          "w": {"type": "number", "minimum": 1},
+          "h": {"type": "number", "minimum": 1},
+          "props": {"type": "object", "additionalProperties": true},
+          "children": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
+

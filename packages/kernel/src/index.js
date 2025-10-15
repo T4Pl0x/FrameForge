@@ -105,7 +105,7 @@ export function createKernel(options = {}) {
     bus.emit('proposal:approved', { proposal_id: id, target: p.target, status: p.status, trace_id: p.trace_id });
   }
 
-  function apply(id, { user } = {}) {
+  function apply(id, { user, override } = {}) {
     const p = proposals.get(id);
     if (!p || p.status !== 'approved') throw new Error('proposal not approved');
     const actor = user || currentUser;
@@ -115,16 +115,20 @@ export function createKernel(options = {}) {
       err.code = 403; err.need = need; err.path = p.target?.file || 'unknown';
       throw err;
     }
+    if (override) {
+      p.metadata = p.metadata || {};
+      p.metadata.override = override;
+    }
     // Owner override expiry enforcement
-    const override = p?.metadata?.override;
-    if (override && override.expires_at) {
-      const exp = new Date(override.expires_at).getTime();
+    const ovBundle = p?.metadata?.override;
+    if (ovBundle && ovBundle.expires_at) {
+      const exp = new Date(ovBundle.expires_at).getTime();
       const now = Date.now();
       const roles = actor?.roles || [];
       const isOwner = roles.includes('owner');
       if (now > exp && !isOwner) {
         const err = new Error('Override expired');
-        err.code = 403; err.need = 'owner'; err.path = (override.scope?.file) || p.target?.file || 'unknown';
+        err.code = 403; err.need = 'owner'; err.path = (ovBundle.scope?.file) || p.target?.file || 'unknown';
         throw err;
       }
     }

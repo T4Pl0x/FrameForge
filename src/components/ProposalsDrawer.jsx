@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useKernel } from '../kernel/KernelProvider.jsx';
+import { createKernelApi } from '../../packages/kernel/src/api.js';
+import OverrideForm from './OverrideForm.jsx';
 
 function summarize(p) {
   const file = p?.target?.file || 'ui.json';
@@ -14,6 +16,7 @@ export default function ProposalsDrawer({ open, onClose }) {
   const kernel = useKernel();
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
+  const api = useMemo(() => createKernelApi(kernel), [kernel]);
   const auto = useMemo(() => {
     try {
       const envFlag = (import.meta && import.meta.env && import.meta.env.VITE_FF_DEV_AUTO_APPROVE) || '';
@@ -23,22 +26,23 @@ export default function ProposalsDrawer({ open, onClose }) {
   }, []);
 
   const reload = () => {
-    try {
-      const all = kernel.proposals.list ? kernel.proposals.list() : (kernel.host.listProposals ? kernel.host.listProposals() : []);
-      setItems(all);
-    } catch (e) {
-      setError(e?.message || String(e));
-    }
+    try { setItems(api.listProposals() || []); }
+    catch (e) { setError(e?.message || String(e)); }
   };
 
   useEffect(() => {
     reload();
-    const unsub1 = kernel.bus.on('proposal:submitted', reload);
-    const unsub2 = kernel.bus.on('proposal:approved', reload);
-    const unsub3 = kernel.bus.on('proposal:applied', reload);
-    const unsub4 = kernel.bus.on('proposal:rejected', reload);
-    return () => { unsub1?.(); unsub2?.(); unsub3?.(); unsub4?.(); };
+    const off = api.events.subscribe('proposal.*', reload);
+    return () => { try { off(); } catch {} };
   }, [kernel]);
+
+  const currentUser = useMemo(() => {
+    try {
+      const id = localStorage.getItem('frameforge-user-id') || 'u_owner';
+      const role = localStorage.getItem('frameforge-user-role') || 'owner';
+      return { id, roles: [role] };
+    } catch { return { id: 'u_owner', roles: ['owner'] }; }
+  }, []);
 
   if (!open) return null;
   return (
@@ -80,14 +84,31 @@ export default function ProposalsDrawer({ open, onClose }) {
                 )}
                 <div style={{ fontSize: 12, color: '#374151', marginTop: 4 }}>{s.reason}</div>
                 <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>proposed by {s.actor}</div>
+                {currentUser.roles.includes('owner') && (
+                  <div style={{ marginTop: 8, background: '#FFFBEB', border: '1px solid #FDE68A', padding: 8, borderRadius: 6 }}>
+                    <div style={{ fontSize: 12, color: '#92400E', marginBottom: 6 }}>Blocked by gates? As owner, you can apply a scoped override.</div>
+                    <OverrideForm
+                      defaultScope={{ file: (p?.target?.file) || 'spec/ui.json', path: p?.target?.path || '/' }}
+                      onSubmit={async (bundle) => {
+                        try {
+                          await api.approve(p.id, currentUser.id);
+                        } catch {}
+                        try {
+                          await api.apply(p.id, { override: { scope: bundle.scope, reason: bundle.reason, approved_by: currentUser.id, expires_at: bundle.expires_at }, user: currentUser });
+                          reload();
+                        } catch (e) { setError(e?.message || String(e)); }
+                      }}
+                    />
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'flex-end' }}>
                   <button type="button" onClick={() => { try { kernel.proposals.reject(p.id, { reason: 'dismissed' }); } catch (e) { setError(e?.message || String(e)); } }}>
                     Dismiss
                   </button>
-                  <button type="button" onClick={() => { try { kernel.proposals.approve(p.id, { by: 'user' }); } catch (e) { setError(e?.message || String(e)); } }} disabled={p.status !== 'ready' && p.status !== 'submitted'}>
+                  <button type="button" onClick={() => { try { api.approve(p.id, currentUser.id); } catch (e) { setError(e?.message || String(e)); } }} disabled={p.status !== 'ready' && p.status !== 'submitted'}>
                     Approve
                   </button>
-                  <button type="button" onClick={() => { try { kernel.proposals.apply(p.id, {}); } catch (e) { setError(e?.message || String(e)); } }} disabled={p.status !== 'approved'}>
+                  <button type="button" onClick={() => { try { api.apply(p.id, { user: currentUser }); } catch (e) { setError(e?.message || String(e)); } }} disabled={p.status !== 'approved'}>
                     Apply
                   </button>
                 </div>
