@@ -33,6 +33,7 @@ export function createKernel(options = {}) {
   };
 
   const GEOMETRY_PATHS = [/^\/ui\/frames(?:\/[0-9-]+)?(?:\/|$)/, /^\/ui\/screens(?:\/|$)/];
+  const AI_EXTS = new Set(['@frameforge/ext-compiler', '@frameforge/ext-exec']);
 
   function isGeometryPatch(op) {
     try { return GEOMETRY_PATHS.some((rx) => rx.test(op.path)); } catch { return false; }
@@ -70,6 +71,16 @@ export function createKernel(options = {}) {
       p.status = 'invalid';
       p.errors = ['GEOMETRY_WRITE_FORBIDDEN: Only @frameforge/ext-ui may propose geometry/layout changes'];
       return { ok: false, errors: p.errors };
+    }
+    // AI provenance strictness
+    if (AI_EXTS.has(actorName)) {
+      const modelId = p?.provenance?.model?.id;
+      const inputsSha = p?.provenance?.inputs_sha256;
+      if (!modelId || !inputsSha) {
+        p.status = 'invalid';
+        p.errors = ['PROVENANCE_INCOMPLETE: AI proposals must include model.id and inputs_sha256'];
+        return { ok: false, errors: p.errors };
+      }
     }
     p.status = v.ok ? 'ready' : 'invalid';
     p.errors = v.errors;
@@ -117,6 +128,8 @@ export function createKernel(options = {}) {
         state_hash,
         trace_id,
         applied_at: new Date().toISOString(),
+        model: p?.provenance?.model || null,
+        inputs_sha256: p?.provenance?.inputs_sha256 || null,
       };
       // Append to meta.audit
       const patch = [{ op: 'add', path: '/meta/audit/-', value: auditEntry }];

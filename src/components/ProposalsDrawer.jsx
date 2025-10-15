@@ -70,6 +70,14 @@ export default function ProposalsDrawer({ open, onClose }) {
                   </div>
                   <div style={{ fontSize: 12, color: '#6b7280' }}>{s.when}</div>
                 </div>
+                {p?.provenance?.model?.id && (
+                  <div style={{ marginTop: 4, display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, background: '#EEF2FF', color: '#3730A3', padding: '2px 6px', borderRadius: 9999 }}>AI: {p.provenance.model.id}</span>
+                    {p?.provenance?.inputs_sha256 && (
+                      <button type="button" title="Copy inputs hash" style={{ fontSize: 11 }} onClick={() => { try { navigator.clipboard?.writeText(p.provenance.inputs_sha256); } catch {} }}>copy hash</button>
+                    )}
+                  </div>
+                )}
                 <div style={{ fontSize: 12, color: '#374151', marginTop: 4 }}>{s.reason}</div>
                 <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>proposed by {s.actor}</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'flex-end' }}>
@@ -91,4 +99,3 @@ export default function ProposalsDrawer({ open, onClose }) {
     </div>
   );
 }
-

@@ -819,7 +819,44 @@ export default function App() {
       removeComponent,
       exportDoc,
       importDoc,
+      startGesture,
+      enqueueFrameUpdate,
+      enqueueNodeUpdate,
+      flushBatch,
+      cancelBatch,
     } = useDocumentOperations(doc, setDoc, setMenu, activeScreenId);
+
+    // Wire batched gesture events to proposals (one proposal per gesture)
+    useEffect(() => {
+      const debounceMs = 250;
+      let t = null;
+      const onStart = () => {
+        try { if (typeof cancelBatch === 'function') cancelBatch(); } catch {}
+        try { if (typeof startGesture === 'function') startGesture(); } catch {}
+      };
+      const onQueue = (ev) => {
+        const d = ev?.detail || {};
+        try {
+          if (d.type === 'frame' && typeof enqueueFrameUpdate === 'function') enqueueFrameUpdate(d.frameId, d.updates);
+          else if (d.type === 'node' && typeof enqueueNodeUpdate === 'function') enqueueNodeUpdate(d.frameId, d.nodeId, d.updates);
+          if (t) clearTimeout(t);
+          t = setTimeout(() => { try { if (typeof flushBatch === 'function') flushBatch(); } catch {} }, debounceMs);
+        } catch {}
+      };
+      const onFlush = () => {
+        if (t) { clearTimeout(t); t = null; }
+        try { if (typeof flushBatch === 'function') flushBatch(); } catch {}
+      };
+      window.addEventListener('ff:gesture:start', onStart);
+      window.addEventListener('ff:gesture:queue', onQueue);
+      window.addEventListener('ff:gesture:flush', onFlush);
+      return () => {
+        window.removeEventListener('ff:gesture:start', onStart);
+        window.removeEventListener('ff:gesture:queue', onQueue);
+        window.removeEventListener('ff:gesture:flush', onFlush);
+        if (t) clearTimeout(t);
+      };
+    }, [startGesture, enqueueFrameUpdate, enqueueNodeUpdate, flushBatch, cancelBatch]);
 
     const {
       handleFrameMouseDown,

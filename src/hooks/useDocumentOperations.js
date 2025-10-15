@@ -108,7 +108,7 @@ export const useDocumentOperations = (doc, setDoc, setMenu, activeScreenId) => {
     try { return useKernel(); } catch { return null; }
   })();
 
-  const submitProposal = async (patches, title, rationale) => {
+  const submitProposal = async (patches, title, rationale, idempotencyKey) => {
     if (!kernelCtx) return;
     const id = kernelCtx.proposals.propose({
       target: 'ui.json',
@@ -119,10 +119,40 @@ export const useDocumentOperations = (doc, setDoc, setMenu, activeScreenId) => {
         sourceExtension: '@frameforge/ext-ui',
         scope: ['ui'],
         labels: ['ui', 'geometry']
-      }
+      },
+      idempotencyKey
     });
     try { kernelCtx.proposals.preflight(id); } catch {}
     // Do not auto-approve/apply here
+  };
+
+  // Batched gesture buffer
+  let batchBuffer = [];
+  let batchGestureId = null;
+  let batchTimer = null;
+
+  const startGesture = () => {
+    batchGestureId = `gst_${Math.random().toString(36).slice(2, 10)}`;
+  };
+
+  const enqueueOps = (ops) => {
+    if (!Array.isArray(ops) || ops.length === 0) return;
+    batchBuffer.push(...ops);
+  };
+
+  const flushBatch = () => {
+    if (!batchBuffer.length) return;
+    const ops = batchBuffer.splice(0, batchBuffer.length);
+    const idem = batchGestureId ? `idem:${batchGestureId}` : undefined;
+    submitProposal(ops, 'UI gesture: batched edits', 'Batched drag/resize gesture', idem);
+    batchGestureId = null;
+    if (batchTimer) { clearTimeout(batchTimer); batchTimer = null; }
+  };
+
+  const cancelBatch = () => {
+    batchBuffer = [];
+    batchGestureId = null;
+    if (batchTimer) { clearTimeout(batchTimer); batchTimer = null; }
   };
 
   const idxByFrameId = (id) => {
@@ -221,6 +251,32 @@ export const useDocumentOperations = (doc, setDoc, setMenu, activeScreenId) => {
     if (ops.length) submitProposal(ops, 'UI edit: update frame', 'User updated frame properties');
   };
 
+  const enqueueFrameUpdate = (frameId, updates) => {
+    const fi = idxByFrameId(frameId);
+    if (fi < 0) return;
+    const ops = [];
+    for (const [k, v] of Object.entries(updates || {})) {
+      ops.push({ op: 'replace', path: `/ui/frames/${fi}/${k}`, value: v });
+    }
+    enqueueOps(ops);
+  };
+
+  const enqueueNodeUpdate = (frameId, nodeId, updates) => {
+    const fi = idxByFrameId(frameId);
+    if (fi < 0) return;
+    const spec = kernelCtx?.store?.snapshot()?.spec;
+    const frame = spec?.ui?.frames?.[fi];
+    const ni = idxByNodeId(frame, nodeId);
+    if (ni < 0) return;
+    const ops = [];
+    if (updates.props && typeof updates.props === 'object') {
+      for (const [k, v] of Object.entries(updates.props)) {
+        ops.push({ op: 'replace', path: `/ui/frames/${fi}/nodes/${ni}/props/${k}`, value: v });
+      }
+    }
+    enqueueOps(ops);
+  };
+
   const removeFrame = (frameId) => {
     const fi = idxByFrameId(frameId);
     if (fi < 0) return;
@@ -273,6 +329,11 @@ export const useDocumentOperations = (doc, setDoc, setMenu, activeScreenId) => {
 
   return {
     addFrame,
+    startGesture,
+    enqueueFrameUpdate,
+    enqueueNodeUpdate,
+    flushBatch,
+    cancelBatch,
     addScreen: (screen) => {
       const scr = screen || { id: `screen-${Date.now().toString(36)}`, name: 'Screen', order: (doc.screens?.length || 0), isDefault: false };
       submitProposal([{ op: 'add', path: '/ui/screens/-', value: scr }], 'UI edit: add screen', 'User added a screen');

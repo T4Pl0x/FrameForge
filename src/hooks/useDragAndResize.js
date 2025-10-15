@@ -51,15 +51,22 @@ export const useDragAndResize = (
         newY = Math.max(20, Math.min(canvasRect.height - frame.height - 40, newY));
       }
 
-      updateFrame(frameId, { x: newX, y: newY });
+      // Batch: queue ops; actual submit on flush in App integration
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('ff:gesture:queue', { detail: { type: 'frame', frameId, updates: { x: newX, y: newY } } }));
+        }
+      } catch {}
     };
 
     const handleMouseUp = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = 'default';
+      try { window.dispatchEvent(new CustomEvent('ff:gesture:flush')); } catch {}
     };
 
+    try { window.dispatchEvent(new CustomEvent('ff:gesture:start')); } catch {}
     document.body.style.cursor = 'grabbing';
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
@@ -97,15 +104,21 @@ export const useDragAndResize = (
         newHeight = Math.min(newHeight, maxHeight);
       }
 
-      updateFrame(frameId, { width: newWidth, height: newHeight });
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('ff:gesture:queue', { detail: { type: 'frame', frameId, updates: { width: newWidth, height: newHeight } } }));
+        }
+      } catch {}
     };
 
     const handleMouseUp = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = 'default';
+      try { window.dispatchEvent(new CustomEvent('ff:gesture:flush')); } catch {}
     };
 
+    try { window.dispatchEvent(new CustomEvent('ff:gesture:start')); } catch {}
     document.body.style.cursor = 'nw-resize';
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
@@ -140,13 +153,11 @@ export const useDragAndResize = (
       const constrainedX = Math.max(0, Math.min(frame.width - nodeWidth - 32, newX));
       const constrainedY = Math.max(0, Math.min(frame.height - nodeHeight - 64, newY));
 
-      updateNode(frameId, nodeId, {
-        props: {
-          ...node.props,
-          x: constrainedX,
-          y: constrainedY
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('ff:gesture:queue', { detail: { type: 'node', frameId, nodeId, updates: { props: { ...node.props, x: constrainedX, y: constrainedY } } } }));
         }
-      });
+      } catch {}
     };
 
     const handleMouseUp = () => {
@@ -160,8 +171,10 @@ export const useDragAndResize = (
       if (finalAnalysis?.score < initialScore) {
         console.log('Design improvement needed after component move');
       }
+      try { window.dispatchEvent(new CustomEvent('ff:gesture:flush')); } catch {}
     };
 
+    try { window.dispatchEvent(new CustomEvent('ff:gesture:start')); } catch {}
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
