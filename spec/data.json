@@ -1,4 +1,5 @@
 {
+  "$schema": "https://frameforge.local/schemas/data.schema.json",
   "models": [],
   "rag": { "indices": [] }
 }

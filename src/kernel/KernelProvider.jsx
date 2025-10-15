@@ -20,9 +20,33 @@ function loadInitialUi() {
 }
 
 export function KernelProvider({ children }) {
-  const kernel = useMemo(() => createKernel({ store: { initialSpec: { ui: loadInitialUi(), logic: { policies: { requireApproval: true } }, data: { rag: { indices: [] } }, theme: {}, overlays: {}, tests: {}, meta: {}, analysis: {} } } }), []);
+  const user = (() => {
+    try {
+      const id = (typeof localStorage !== 'undefined' && localStorage.getItem('frameforge-user-id')) || 'u_dev';
+      const role = (typeof localStorage !== 'undefined' && localStorage.getItem('frameforge-user-role')) || 'owner';
+      return { id, roles: [role] };
+    } catch { return { id: 'u_dev', roles: ['owner'] }; }
+  })();
+  const kernel = useMemo(() => createKernel({ user, store: { initialSpec: { ui: loadInitialUi(), logic: { policies: { requireApproval: true } }, data: { rag: { indices: [] } }, theme: {}, overlays: {}, tests: {}, meta: {}, analysis: {} } } }), []);
   useEffect(() => {
     try { registerExtensions(kernel); } catch {}
+  }, [kernel]);
+  // Dev auto-approve
+  useEffect(() => {
+    const isAuto = (() => {
+      try {
+        const envFlag = (import.meta && import.meta.env && import.meta.env.VITE_FF_DEV_AUTO_APPROVE) || '';
+        const lc = (typeof localStorage !== 'undefined' && localStorage.getItem('FF_DEV_AUTO_APPROVE')) || '';
+        return String(envFlag || lc).toLowerCase() === 'true';
+      } catch { return false; }
+    })();
+    if (!isAuto) return;
+    const off = kernel.bus.on('proposal:submitted', ({ id }) => {
+      try { kernel.proposals.preflight(id); } catch {}
+      try { kernel.proposals.approve(id, { by: 'dev-auto', user }); } catch {}
+      try { kernel.proposals.apply(id, { user }); } catch {}
+    });
+    return () => { try { off(); } catch {} };
   }, [kernel]);
   return <KernelContext.Provider value={kernel}>{children}</KernelContext.Provider>;
 }

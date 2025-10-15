@@ -1,4 +1,5 @@
 {
+  "$schema": "https://frameforge.local/schemas/logic.schema.json",
   "agents": [],
   "policies": {
     "requireApproval": true

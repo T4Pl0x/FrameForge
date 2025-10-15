@@ -1,4 +1,5 @@
 {
+  "$schema": "https://frameforge.local/schemas/ui.schema.json",
   "screens": [
     { "id": "screen-main", "name": "Main", "order": 0, "isDefault": true }
   ],

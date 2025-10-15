@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://frameforge.local/schemas/meta.schema.json",
+  "type": "object",
+  "properties": {
+    "version": { "type": "number" },
+    "app": { "type": "string" },
+    "createdAt": { "type": "string" },
+    "audit": { "type": "array" }
+  },
+  "additionalProperties": true
+}
+

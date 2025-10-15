@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://frameforge.local/schemas/overlays.schema.json",
+  "type": "object",
+  "properties": { "overlays": { "type": "array" } },
+  "additionalProperties": true
+}
+

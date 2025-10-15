@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://frameforge.local/schemas/logic.schema.json",
+  "type": "object",
+  "properties": {
+    "agents": { "type": "array" },
+    "policies": {
+      "type": "object",
+      "properties": {
+        "requireApproval": { "type": "boolean" },
+        "askWhenUncertain": { "type": "boolean" },
+        "maxRisk": { "enum": ["low", "medium", "high"] },
+        "cot": { "enum": ["off", "brief", "verbose"] },
+        "cove": { "enum": ["off", "strict", "very_strict"] },
+        "rateLimit": {
+          "type": "object",
+          "properties": { "rpm": {"type": "number"}, "burst": {"type": "number"} },
+          "required": ["rpm", "burst"],
+          "additionalProperties": false
+        },
+        "selfHeal": {
+          "type": "object",
+          "properties": {
+            "retries": {"type": "number"},
+            "backoffMs": {"type": "number"},
+            "fallback": {"enum": ["use_mock", "none"]}
+          },
+          "required": ["retries", "backoffMs", "fallback"],
+          "additionalProperties": false
+        },
+        "memory": {
+          "type": "object",
+          "properties": { "window": {"type":"string"}, "persist": {"type":"boolean"} },
+          "required": ["window", "persist"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
+

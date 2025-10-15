@@ -1,4 +1,5 @@
 {
+  "$schema": "https://frameforge.local/schemas/theme.schema.json",
   "mode": "light",
   "primary": "#4f46e5"
 }

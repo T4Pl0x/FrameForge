@@ -1,3 +1,4 @@
 {
+  "$schema": "https://frameforge.local/schemas/overlays.schema.json",
   "overlays": []
 }

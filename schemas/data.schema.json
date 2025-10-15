@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://frameforge.local/schemas/data.schema.json",
+  "type": "object",
+  "properties": {
+    "models": { "type": "array" },
+    "rag": {
+      "type": "object",
+      "properties": {
+        "indices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": { "type": "string" },
+              "embedding": { "type": "string" },
+              "chunk": { "type": "number" },
+              "piiClass": { "type": "string" },
+              "tenancy": { "type": "string" },
+              "ttlDays": { "type": "number" },
+              "reindexPolicy": { "type": "string" },
+              "fallback": { "enum": ["use_mock", "none"] }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
+

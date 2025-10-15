@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://frameforge.local/schemas/tests.schema.json",
+  "type": "object",
+  "properties": {
+    "cases": { "type": "array" }
+  },
+  "additionalProperties": true
+}
+

@@ -1,5 +1,7 @@
 {
+  "$schema": "https://frameforge.local/schemas/meta.schema.json",
   "version": 1,
   "app": "FrameForge OS",
-  "createdAt": ""
+  "createdAt": "",
+  "audit": []
 }

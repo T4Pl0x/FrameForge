@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "validate:preflight": "node frameforge/scripts/validate-preflight.mjs"
+    "validate:preflight": "node frameforge/scripts/validate-preflight.mjs",
+    "validate:spec": "node frameforge/scripts/validate-spec.mjs"
   },
   "engines": {
     "node": ">=20.19.0"
@@ -51,3 +52,4 @@
     }
   }
 }
+
