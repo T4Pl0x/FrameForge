@@ -1,4 +1,5 @@
 import { genId } from '../componentRegistry/index.js';
+import { useKernel } from '../kernel/KernelProvider.jsx';
 
 const DEFAULT_FRAME_PROPS = {
   x: 100,
@@ -103,8 +104,51 @@ const normalizeDocument = (rawDoc) => {
  * Encapsulates all document-related business logic
  */
 export const useDocumentOperations = (doc, setDoc, setMenu, activeScreenId) => {
+  const kernelCtx = (() => {
+    try { return useKernel(); } catch { return null; }
+  })();
+
+  const submitProposal = async (patches, title, rationale) => {
+    if (!kernelCtx) return;
+    const id = kernelCtx.proposals.propose({
+      target: 'ui.json',
+      patch: patches,
+      rationale: rationale || title || 'UI edit',
+      metadata: {
+        title: title || 'UI edit',
+        sourceExtension: '@frameforge/ext-ui',
+        scope: ['ui'],
+        labels: ['ui', 'geometry']
+      }
+    });
+    try { kernelCtx.proposals.preflight(id); } catch {}
+    // Do not auto-approve/apply here
+  };
+
+  const idxByFrameId = (id) => {
+    try {
+      const spec = kernelCtx?.store?.snapshot()?.spec;
+      const frames = spec?.ui?.frames || [];
+      return frames.findIndex((f) => f.id === id);
+    } catch { return -1; }
+  };
+
+  const idxByNodeId = (frame, nodeId) => {
+    if (!frame) return -1;
+    const nodes = Array.isArray(frame.nodes) ? frame.nodes : [];
+    return nodes.findIndex((n) => n.id === nodeId);
+  };
+
+  // When spec changes (approved + applied), refresh local view from spec.ui
+  try {
+    if (kernelCtx?.bus && typeof window !== 'undefined') {
+      kernelCtx.bus.on('spec:changed', ({ spec }) => {
+        if (spec?.ui) setDoc(spec.ui);
+      });
+    }
+  } catch {}
   // Add a new frame to the document
-  const addFrame = () => {
+  const addFrame = (overrides = {}) => {
     const newFrame = {
       id: genId(),
       x: 100,
@@ -118,103 +162,80 @@ export const useDocumentOperations = (doc, setDoc, setMenu, activeScreenId) => {
       cornerStyle: 'rounded',
       title: 'Untitled Frame',
       screenId: activeScreenId || (doc.screens && doc.screens[0]?.id) || 'screen-main',
-      nodes: []
+      nodes: [],
+      ...overrides
     };
-    
-    setDoc(prev => ({
-      ...prev,
-      frames: [...prev.frames, newFrame]
-    }));
+    submitProposal([
+      { op: 'add', path: '/ui/frames/-', value: newFrame }
+    ], 'UI edit: add frame', 'User added a frame on canvas');
     
     return newFrame.id;
   };
 
   // Add a component to a frame
   const addComponent = (frameId, componentType) => {
-    setDoc(prev => ({
-      ...prev,
-      frames: prev.frames.map(frame => {
-        if (frame.id === frameId) {
-          const newNode = {
-            id: genId(),
-            type: componentType,
-            content: '',
-            props: {
-              x: 20 + (frame.nodes.length * 10),
-              y: 20 + (frame.nodes.length * 10)
-            }
-          };
-          const next = { ...frame, nodes: [...frame.nodes, newNode] };
-          next.changeFlags = { ...(frame.changeFlags || {}), added: true };
-          next.lastChangedAt = Date.now();
-          return next;
-        }
-        return frame;
-      })
-    }));
+    const fi = idxByFrameId(frameId);
+    if (fi < 0) return;
+    const newNode = {
+      id: genId(),
+      type: componentType,
+      content: '',
+      props: {
+        x: 20,
+        y: 20
+      }
+    };
+    submitProposal([
+      { op: 'add', path: `/ui/frames/${fi}/nodes/-`, value: newNode }
+    ], 'UI edit: add component', `Add ${componentType} to frame`);
     setMenu(null);
   };
 
   // Update node properties
   const updateNode = (frameId, nodeId, updates) => {
-    setDoc(prev => ({
-      ...prev,
-      frames: prev.frames.map(frame => {
-        if (frame.id === frameId) {
-          const next = {
-            ...frame,
-            nodes: frame.nodes.map(node => (node.id === nodeId ? { ...node, ...updates } : node))
-          };
-          next.changeFlags = { ...(frame.changeFlags || {}), edited: true };
-          next.lastChangedAt = Date.now();
-          return next;
-        }
-        return frame;
-      })
-    }));
+    const fi = idxByFrameId(frameId);
+    if (fi < 0) return;
+    const spec = kernelCtx?.store?.snapshot()?.spec;
+    const frame = spec?.ui?.frames?.[fi];
+    const ni = idxByNodeId(frame, nodeId);
+    if (ni < 0) return;
+    const ops = [];
+    if (updates.type !== undefined) ops.push({ op: 'replace', path: `/ui/frames/${fi}/nodes/${ni}/type`, value: updates.type });
+    if (updates.content !== undefined) ops.push({ op: 'replace', path: `/ui/frames/${fi}/nodes/${ni}/content`, value: updates.content });
+    if (updates.props && typeof updates.props === 'object') {
+      for (const [k, v] of Object.entries(updates.props)) {
+        ops.push({ op: 'replace', path: `/ui/frames/${fi}/nodes/${ni}/props/${k}`, value: v });
+      }
+    }
+    if (ops.length) submitProposal(ops, 'UI edit: update node', 'User updated a node');
   };
 
   // Update frame properties
   const updateFrame = (frameId, updates) => {
-    setDoc(prev => ({
-      ...prev,
-      frames: prev.frames.map(frame => {
-        if (frame.id === frameId) {
-          const moved = ('x' in updates) || ('y' in updates);
-          const resized = ('width' in updates) || ('height' in updates);
-          const next = { ...frame, ...updates };
-          if (moved || resized) {
-            next.changeFlags = { ...(frame.changeFlags || {}), moved: moved || undefined, resized: resized || undefined };
-            next.lastChangedAt = Date.now();
-          }
-          return next;
-        }
-        return frame;
-      })
-    }));
+    const fi = idxByFrameId(frameId);
+    if (fi < 0) return;
+    const ops = [];
+    for (const [k, v] of Object.entries(updates || {})) {
+      ops.push({ op: 'replace', path: `/ui/frames/${fi}/${k}`, value: v });
+    }
+    if (ops.length) submitProposal(ops, 'UI edit: update frame', 'User updated frame properties');
   };
 
   const removeFrame = (frameId) => {
-    setDoc(prev => ({
-      ...prev,
-      frames: prev.frames.filter(frame => frame.id !== frameId),
-    }));
+    const fi = idxByFrameId(frameId);
+    if (fi < 0) return;
+    submitProposal([{ op: 'remove', path: `/ui/frames/${fi}` }], 'UI edit: remove frame', 'User removed a frame');
     setMenu(prev => (prev?.frameId === frameId ? null : prev));
   };
 
   const removeComponent = (frameId, nodeId) => {
-    setDoc(prev => ({
-      ...prev,
-      frames: prev.frames.map(frame => {
-        if (frame.id === frameId) {
-          const next = { ...frame, nodes: frame.nodes.filter(node => node.id !== nodeId) };
-          next.changeFlags = { ...(frame.changeFlags || {}), removed: true };
-          next.lastChangedAt = Date.now();
-          return next;
-        }
-        return frame;
-      }),
-    }));
+    const fi = idxByFrameId(frameId);
+    if (fi < 0) return;
+    const spec = kernelCtx?.store?.snapshot()?.spec;
+    const frame = spec?.ui?.frames?.[fi];
+    const ni = idxByNodeId(frame, nodeId);
+    if (ni < 0) return;
+    submitProposal([{ op: 'remove', path: `/ui/frames/${fi}/nodes/${ni}` }], 'UI edit: remove component', 'User removed a component');
   };
 
   // Export document as JSON
@@ -239,7 +260,7 @@ export const useDocumentOperations = (doc, setDoc, setMenu, activeScreenId) => {
       try {
         const importedDoc = JSON.parse(e.target.result);
         const normalizedDoc = normalizeDocument(importedDoc);
-        setDoc(normalizedDoc);
+        submitProposal([{ op: 'replace', path: '/ui', value: normalizedDoc }], 'UI replace: import', 'Imported document');
         setMenu(null);
       } catch (error) {
         console.error('Error importing document:', error);
@@ -252,6 +273,11 @@ export const useDocumentOperations = (doc, setDoc, setMenu, activeScreenId) => {
 
   return {
     addFrame,
+    addScreen: (screen) => {
+      const scr = screen || { id: `screen-${Date.now().toString(36)}`, name: 'Screen', order: (doc.screens?.length || 0), isDefault: false };
+      submitProposal([{ op: 'add', path: '/ui/screens/-', value: scr }], 'UI edit: add screen', 'User added a screen');
+      return scr.id;
+    },
     addComponent,
     updateNode,
     updateFrame,

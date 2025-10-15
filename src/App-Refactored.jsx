@@ -815,6 +815,7 @@ export default function App() {
 
     const {
       addFrame,
+      addScreen,
       addComponent,
       updateNode,
       updateFrame,
@@ -853,17 +854,13 @@ export default function App() {
         ? Math.max(...(doc.screens || screens).map(s => s.order ?? 0)) + 1
         : 0;
       const scrName = name && name.trim() ? name.trim() : `Screen ${(doc.screens?.length ?? screens.length) + 1}`;
-      setDoc(prev => ({
-        ...prev,
-        screens: [...(prev.screens || []), { id, name: scrName, order, isDefault: false }],
-      }));
+      addScreen({ id, name: scrName, order, isDefault: false });
       return id;
     };
 
     // Create a modal frame on the given screen and return its id
     const handleCreateModalFrame = (screenId, title) => {
-      const modal = {
-        id: `frame-${Date.now().toString(36)}`,
+      const id = addFrame({
         x: 120,
         y: 100,
         width: 360,
@@ -876,10 +873,8 @@ export default function App() {
         title: title || 'Modal',
         screenId: screenId || activeScreenId || screens[0]?.id || 'screen-main',
         kind: 'modal',
-        nodes: [],
-      };
-      setDoc(prev => ({ ...prev, frames: [...prev.frames, modal] }));
-      return modal.id;
+      });
+      return id;
     };
 
     const handleAddFrameTitleOption = (title) => {
