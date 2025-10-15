@@ -7,6 +7,9 @@ import ProposalsEntry from './components/ProposalsEntry.jsx'
 import GhostLayer from './components/GhostLayer.jsx'
 import Toasts from './components/Toasts.jsx'
 import RunHistoryPanel from './components/RunHistoryPanel.jsx'
+import { startGateToastTap } from './state/runHistoryGateTap.js'
+
+startGateToastTap()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

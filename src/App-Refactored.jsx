@@ -19,6 +19,7 @@ import ScreenTabs from './components/ScreenTabs.jsx';
 import GateBadge from './components/GateBadge.jsx';
 import { buildMermaidDefinition } from './utils/mermaid.js';
 import { broker } from './tools/broker.js';
+import { evaluateGates } from './tools/gates/evaluateGates.js';
 
 // GitHub Actions artifact helpers and gates computation
 const ARTIFACTS = {
@@ -80,34 +81,9 @@ function computeGatesFromReports(reports) {
 }
 
 async function foldArtifactsIntoGatesBroker({ owner, repo, runId, token }) {
-  const kapi = (typeof window !== 'undefined' && window.__ff_kernel_api) || null;
-  const tr = 'tr_gate_' + Math.random().toString(36).slice(2, 8);
-  try { kapi?.events?.publish('gate.started', { trace_id: tr, status: 'unknown', target: { file: 'reports' } }); } catch {}
   try {
-    const tests = await broker.artifacts.getJson({ owner, repo, runId, name: ARTIFACTS.tests, token });
-    const a11y = await broker.artifacts.getJson({ owner, repo, runId, name: ARTIFACTS.a11y, token });
-    const lb = await broker.artifacts.getJson({ owner, repo, runId, name: ARTIFACTS.lintBuild, token });
-    const reports = { [ARTIFACTS.tests]: tests, [ARTIFACTS.a11y]: a11y, [ARTIFACTS.lintBuild]: lb };
-    const gates = computeGatesFromReports(reports);
-    const allPass = (gates.tests === 'pass' && gates.a11y === 'pass' && gates.lintBuild === 'pass');
-    if (allPass) {
-      const details = {
-        tests: { passed: tests?.summary?.passed ?? 0, failed: tests?.summary?.failed ?? 0 },
-        a11y: { violations: Array.isArray(a11y?.violations) ? a11y.violations.length : a11y?.violations ?? 0 },
-        lint: { errors: lb?.lintErrors ?? 0, warnings: lb?.lintWarnings ?? 0 },
-        build: { errors: lb?.buildErrors ?? 0, warnings: lb?.buildWarnings ?? 0 },
-      };
-      try { kapi?.events?.publish('gate.passed', { trace_id: tr, status: 'green', details }); } catch {}
-    } else {
-      // pick a first hint
-      let reportType = 'unknown';
-      let firstHint = '';
-      if (gates.tests !== 'pass' && tests) { reportType = 'tests'; firstHint = `failed: ${tests?.summary?.failed ?? 1}`; }
-      else if (gates.a11y !== 'pass' && a11y) { reportType = 'a11y'; firstHint = `violations: ${Array.isArray(a11y?.violations) ? a11y.violations.length : a11y?.violations ?? 1}`; }
-      else if (gates.lintBuild !== 'pass' && lb) { reportType = 'lintBuild'; firstHint = `lint ${lb?.lintErrors ?? 0}e/${lb?.lintWarnings ?? 0}w · build ${lb?.buildErrors ?? 0}e/${lb?.buildWarnings ?? 0}w`; }
-      try { kapi?.events?.publish('gate.failed', { trace_id: tr, status: 'red', details: { firstHint, reportType } }); } catch {}
-    }
-    return gates;
+    const result = await evaluateGates({ owner, repo, runId, token, trace_id: 'tr_gate_' + Math.random().toString(36).slice(2, 8) });
+    return result.gates;
   } catch {
     return { tests: 'unknown', a11y: 'unknown', lintBuild: 'unknown', risk: 'low' };
   }

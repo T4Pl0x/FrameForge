@@ -6,5 +6,5 @@ export const ERROR_MESSAGES = {
   [ERR.RBAC_FORBIDDEN]: 'You don’t have permission for this action. Ask an approver/owner.',
   [ERR.IDEMPOTENCY_DUP]: 'Duplicate action ignored (already applied).',
   [ERR.OVERRIDE_EXPIRED]: 'Override has expired. Ask an owner or extend the expiry.',
+  GATE_FAILED_HINT: 'Publish blocked by a failing gate.'
 };
-
