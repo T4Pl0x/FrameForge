@@ -1,0 +1,6 @@
+{
+  "screens": [
+    { "id": "screen-main", "name": "Main", "order": 0, "isDefault": true }
+  ],
+  "frames": []
+}

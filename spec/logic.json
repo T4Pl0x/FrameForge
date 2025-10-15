@@ -1,0 +1,6 @@
+{
+  "agents": [],
+  "policies": {
+    "requireApproval": true
+  }
+}
