@@ -16,6 +16,7 @@ import Canvas from './components/Canvas.jsx';
 const WorkflowEditor = React.lazy(() => import('./components/WorkflowEditor.jsx'));
 import ModelPicker from './components/ModelPicker.jsx';
 import ScreenTabs from './components/ScreenTabs.jsx';
+import GateBadge from './components/GateBadge.jsx';
 import { buildMermaidDefinition } from './utils/mermaid.js';
 import { broker } from './tools/broker.js';
 
@@ -324,6 +325,7 @@ export default function App() {
   const publishVersionRef = useRef(null);
   const publishPollRef = useRef(null);
   const [gates, setGates] = useState({ preflight: 'fail', tests: 'unknown', a11y: 'unknown', lintBuild: 'unknown', risk: 'low' });
+  const [gatesMeta, setGatesMeta] = useState({ tests: null, a11y: null, lintBuild: null });
   const [overrideState, setOverrideState] = useState({ enabled: false, reason: '', expires: '', accepted: false, byUserId: '', timestamp: '' });
   const [specMeta, setSpecMeta] = useState(() => {
     try { const raw = localStorage.getItem('frameforge-spec-meta'); return raw ? JSON.parse(raw) : { audit: [] }; } catch { return { audit: [] }; }
@@ -369,14 +371,10 @@ export default function App() {
     let intervalMs = 5000;
     const interval = setInterval(async () => {
       try {
-        // Check PR existence
-        const prResp = await fetch(`https://api.github.com/repos/${encodeURIComponent(repoOwner)}/${encodeURIComponent(repoName)}/pulls?head=${encodeURIComponent(repoOwner + ':' + 'publish/' + versionId)}&state=all`, {
-          headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
-        });
-        if (prResp.ok) {
-          const prs = await prResp.json();
-          if (Array.isArray(prs) && prs.length > 0) {
-            const pr = prs[0];
+        // Check PR existence via broker
+        try {
+          const pr = await broker.vcs.findPRForHead({ owner: repoOwner, repo: repoName, head: `${repoOwner}:publish/${versionId}`, token });
+          if (pr) {
             setPublishStatus('PR opened');
             setPublishInfo(prev => ({
               ...(prev || {}),
@@ -384,48 +382,52 @@ export default function App() {
               pr: { id: pr.number, url: pr.html_url, title: pr.title },
             }));
           }
-        }
-        // Check workflow run status (latest on branch)
-        const runsResp = await fetch(`https://api.github.com/repos/${encodeURIComponent(repoOwner)}/${encodeURIComponent(repoName)}/actions/workflows/${encodeURIComponent(workflowId)}/runs?branch=${encodeURIComponent(branch)}&event=workflow_dispatch&per_page=1`, {
-          headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
-        });
-        if (runsResp.ok) {
-          const data = await runsResp.json();
-          const run = Array.isArray(data?.workflow_runs) ? data.workflow_runs[0] : null;
-          if (run) {
-            const st = run.status; // queued, in_progress, completed
-            if (st === 'queued') setPublishStatus('Queued');
-            else if (st === 'in_progress') setPublishStatus('In progress');
-            else if (st === 'completed') {
-              if (run.conclusion === 'success') setPublishStatus('Passed');
-              else setPublishStatus('Failed');
-              // Fold artifacts into gates once completed
+        } catch { /* ignore */ }
+        // Check workflow run status (latest on branch) via broker
+        const run = await broker.sandbox.latestRun({ owner: repoOwner, repo: repoName, workflow: workflowId, branch, event: 'workflow_dispatch', token });
+        if (run) {
+          const st = run.status; // queued, in_progress, completed
+          if (st === 'queued') setPublishStatus('Queued');
+          else if (st === 'in_progress') setPublishStatus('In progress');
+          else if (st === 'completed') {
+            if (run.conclusion === 'success') setPublishStatus('Passed');
+            else setPublishStatus('Failed');
+            // Fold artifacts into gates once completed
+            try {
+              const owner = repoOwner; const repo = repoName;
+              const computed = await foldArtifactsIntoGatesBroker({ owner, repo, runId: run.id, token });
+              setGates((prev) => ({ ...prev, ...computed }));
+              // Meta for tooltips
               try {
-                const owner = repoOwner; const repo = repoName;
-                const computed = await foldArtifactsIntoGatesBroker({ owner, repo, runId: run.id, token });
-                setGates((prev) => ({ ...prev, ...computed }));
-              } catch {/* ignore */}
-              clearInterval(interval);
-              publishPollRef.current = null;
-            }
-            setPublishInfo(prev => ({
-              ...(prev || {}),
-              versionId,
-              run: { id: run.id, url: run.html_url, status: st, conclusion: run.conclusion },
-            }));
-            // Artifacts
-            const artResp = await fetch(`https://api.github.com/repos/${encodeURIComponent(repoOwner)}/${encodeURIComponent(repoName)}/actions/runs/${run.id}/artifacts`, {
-              headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
-            });
-            if (artResp.ok) {
-              const arts = await artResp.json();
-              const map = {};
-              (arts?.artifacts || []).forEach(a => { map[a.name] = { id: a.id, name: a.name, url: a.archive_download_url }; });
-              setPublishInfo(prev => ({ ...(prev || {}), artifacts: map }));
-            }
-            // Backoff after 60s
-            intervalMs = Math.min(intervalMs * 1.5, 30000);
+                const [t, a, l] = await Promise.all([
+                  broker.artifacts.getJson({ owner, repo, runId: run.id, name: ARTIFACTS.tests, token }).catch(() => null),
+                  broker.artifacts.getJson({ owner, repo, runId: run.id, name: ARTIFACTS.a11y, token }).catch(() => null),
+                  broker.artifacts.getJson({ owner, repo, runId: run.id, name: ARTIFACTS.lintBuild, token }).catch(() => null),
+                ]);
+                setGatesMeta({
+                  tests: t?.summary || null,
+                  a11y: a ? { violations: a.violations ?? (Array.isArray(a.violations) ? a.violations.length : 0) } : null,
+                  lintBuild: l ? { lintErrors: l.lintErrors ?? 0, lintWarnings: l.lintWarnings ?? 0, buildErrors: l.buildErrors ?? 0, buildWarnings: l.buildWarnings ?? 0 } : null,
+                });
+              } catch { /* ignore meta */ }
+            } catch {/* ignore */}
+            clearInterval(interval);
+            publishPollRef.current = null;
           }
+          setPublishInfo(prev => ({
+            ...(prev || {}),
+            versionId,
+            run: { id: run.id, url: run.html_url, status: st, conclusion: run.conclusion },
+          }));
+          // Artifacts via broker (for UI links)
+          try {
+            const arts = await broker.artifacts.list({ owner: repoOwner, repo: repoName, runId: run.id, token });
+            const map = {};
+            (arts || []).forEach(a => { map[a.name] = { id: a.id, name: a.name, url: a.url }; });
+            setPublishInfo(prev => ({ ...(prev || {}), artifacts: map }));
+          } catch { /* ignore */ }
+          // Backoff after 60s
+          intervalMs = Math.min(intervalMs * 1.5, 30000);
         }
       } catch {
         // keep polling
@@ -485,6 +487,19 @@ export default function App() {
                 const owner = repoOwner; const repo = repoName;
                 const computed = await foldArtifactsIntoGatesBroker({ owner, repo, runId: run.id, token });
                 setGates(prev => ({ ...prev, ...computed }));
+                // Meta for tooltips
+                try {
+                  const [t, a, l] = await Promise.all([
+                    broker.artifacts.getJson({ owner, repo, runId: run.id, name: ARTIFACTS.tests, token }).catch(() => null),
+                    broker.artifacts.getJson({ owner, repo, runId: run.id, name: ARTIFACTS.a11y, token }).catch(() => null),
+                    broker.artifacts.getJson({ owner, repo, runId: run.id, name: ARTIFACTS.lintBuild, token }).catch(() => null),
+                  ]);
+                  setGatesMeta({
+                    tests: t?.summary || null,
+                    a11y: a ? { violations: a.violations ?? (Array.isArray(a.violations) ? a.violations.length : 0) } : null,
+                    lintBuild: l ? { lintErrors: l.lintErrors ?? 0, lintWarnings: l.lintWarnings ?? 0, buildErrors: l.buildErrors ?? 0, buildWarnings: l.buildWarnings ?? 0 } : null,
+                  });
+                } catch { /* ignore meta */ }
               } catch { /* ignore */ }
               return; // stop polling
             }
@@ -1775,9 +1790,21 @@ export default function App() {
             <div className="publish-gates" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, max-content)', gap: 8, alignItems: 'center', marginBottom: 8 }}>
               <span style={{ fontSize: 12 }}>Gates:</span>
               <span style={{ fontSize: 12 }}>preflight: <strong>{gates.preflight}</strong></span>
-              <span style={{ fontSize: 12 }}>tests: <strong>{gates.tests}</strong></span>
-              <span style={{ fontSize: 12 }}>a11y: <strong>{gates.a11y}</strong></span>
-              <span style={{ fontSize: 12 }}>lintBuild: <strong>{gates.lintBuild}</strong></span>
+              <GateBadge
+                label="Tests"
+                state={gates.tests}
+                tooltip={gatesMeta.tests ? `✓ ${gatesMeta.tests.passed} · ✗ ${gatesMeta.tests.failed} · ~ ${gatesMeta.tests.skipped}` : undefined}
+              />
+              <GateBadge
+                label="A11y"
+                state={gates.a11y}
+                tooltip={gatesMeta.a11y ? `violations: ${gatesMeta.a11y.violations}` : undefined}
+              />
+              <GateBadge
+                label="Lint/Build"
+                state={gates.lintBuild}
+                tooltip={gatesMeta.lintBuild ? `build ${gatesMeta.lintBuild.buildErrors}e/${gatesMeta.lintBuild.buildWarnings}w · lint ${gatesMeta.lintBuild.lintErrors}e/${gatesMeta.lintBuild.lintWarnings}w` : undefined}
+              />
             </div>
             {(!(gates.preflight === 'pass' && gates.tests === 'pass' && gates.a11y === 'pass' && gates.lintBuild === 'pass' && gates.risk === 'low')) && (
               <div style={{ fontSize: 12, color: '#991B1B', background: '#FEF2F2', border: '1px solid #FECACA', padding: 8, borderRadius: 6, marginBottom: 8 }}>

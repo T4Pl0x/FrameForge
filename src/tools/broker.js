@@ -42,12 +42,17 @@ async function downloadArtifactJsonZip(owner, repo, artifactId, token) {
 
 export const broker = {
   sandbox: {
-    async latestRun({ owner, repo, workflow, since, token }) {
-      const url = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/workflows/${encodeURIComponent(workflow)}/runs?event=repository_dispatch&per_page=5`;
+    async latestRun({ owner, repo, workflow, branch, event = 'repository_dispatch', since, token }) {
+      const params = new URLSearchParams();
+      params.set('event', event);
+      params.set('per_page', '5');
+      if (branch) params.set('branch', branch);
+      const url = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/workflows/${encodeURIComponent(workflow)}/runs?${params.toString()}`;
       const data = await ghGET(url, token);
       const runs = Array.isArray(data?.workflow_runs) ? data.workflow_runs : [];
       const sinceMs = Number(since || 0);
-      const run = runs.find(r => !sinceMs || (new Date(r.created_at).getTime() >= sinceMs));
+      const filtered = runs.filter(r => !sinceMs || (new Date(r.created_at).getTime() >= sinceMs));
+      const run = filtered[0] || runs[0] || null;
       return run || null;
     },
   },
@@ -63,4 +68,10 @@ export const broker = {
       return downloadArtifactJsonZip(owner, repo, match.id, token);
     },
   },
+  vcs: {
+    async findPRForHead({ owner, repo, head, token }) {
+      const prs = await ghGET(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?head=${encodeURIComponent(head)}&state=all&per_page=1`, token);
+      return Array.isArray(prs) && prs.length ? prs[0] : null;
+    }
+  }
 };
