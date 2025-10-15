@@ -393,7 +393,7 @@ export default function App() {
             // Fold artifacts into gates once completed
             try {
               const owner = repoOwner; const repo = repoName;
-              const computed = await foldArtifactsIntoGatesBroker({ owner, repo, runId: run.id, token });
+                const computed = await foldArtifactsIntoGatesBroker({ owner, repo, runId: run.id, token, dashboardUrl: run.html_url });
               setGates((prev) => ({ ...prev, ...computed }));
               // Meta for tooltips
               try {
@@ -483,7 +483,7 @@ export default function App() {
               // Fold artifacts into gates based on JSON contents
               try {
                 const owner = repoOwner; const repo = repoName;
-                const computed = await foldArtifactsIntoGatesBroker({ owner, repo, runId: run.id, token });
+                const computed = await foldArtifactsIntoGatesBroker({ owner, repo, runId: run.id, token, dashboardUrl: run.html_url });
                 setGates(prev => ({ ...prev, ...computed }));
                 // Meta for tooltips
                 try {
