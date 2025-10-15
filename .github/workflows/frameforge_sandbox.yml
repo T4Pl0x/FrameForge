@@ -1,0 +1,135 @@
+name: FrameForge Sandbox (repository_dispatch)
+
+on:
+  repository_dispatch:
+    types: [frameforge_sandbox]
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'npm'
+
+      - name: Install deps
+        run: |
+          corepack enable || true
+          npm install
+
+      - name: Lint (JSON)
+        run: |
+          mkdir -p reports
+          npx eslint . --format json --output-file reports/lint.json || true
+
+      - name: Build
+        continue-on-error: true
+        run: |
+          mkdir -p reports
+          set -o pipefail
+          npm run build 2>&1 | tee reports/build.log
+
+      - name: Emit build summary (prefer JSON inputs)
+        run: |
+          mkdir -p artifacts
+          if [ -f artifacts/webpack-stats.json ] || [ -f artifacts/esbuild.json ] || [ -f reports/build.log ]; then
+            node frameforge/scripts/emit-build-summary.js artifacts/webpack-stats.json 2>/dev/null > artifacts/build.json || \
+            node frameforge/scripts/emit-build-summary.js artifacts/esbuild.json 2>/dev/null > artifacts/build.json || \
+            node frameforge/scripts/emit-build-summary.js reports/build.log 2>/dev/null > artifacts/build.json || \
+            echo '{"errorsCount":0,"warningsCount":0}' > artifacts/build.json
+          else
+            echo '{"errorsCount":0,"warningsCount":0}' > artifacts/build.json
+          fi
+
+      - name: Tests (JSON)
+        run: |
+          mkdir -p reports
+          npm test -- --json --outputFile=reports/tests-report.json || echo '{"summary":"no-tests"}' > reports/tests-report.json
+
+      - name: Normalize Tests
+        run: |
+          node frameforge/scripts/normalize-tests.js reports/tests-report.json > reports/tests-report.json.tmp
+          mv reports/tests-report.json.tmp reports/tests-report.json
+
+      - name: A11y scan (axe+playwright)
+        run: |
+          npx playwright install --with-deps
+          node frameforge/scripts/run-a11y-scan.js || echo '{"summary":"a11y-scan-failed"}' > reports/a11y-report.json
+
+      - name: Normalize A11y
+        run: |
+          node frameforge/scripts/normalize-a11y.js reports/a11y-report.json > reports/a11y-report.json.tmp
+          mv reports/a11y-report.json.tmp reports/a11y-report.json
+
+      - name: Summarize lint + build
+        run: |
+          node frameforge/scripts/summarize-lint-build.js || echo '{"lintErrors":0,"lintWarnings":0,"buildErrors":1,"buildWarnings":0}' > reports/lint-build.json
+
+      # Prefer pre-normalized lint-build.json if present; else normalize
+      - name: Ensure normalized lint/build report
+        run: |
+          mkdir -p reports artifacts
+          if [ -f reports/lint-build.json ]; then
+            echo "Found pre-normalized reports/lint-build.json; using it."
+          elif [ -f artifacts/lint-build.json ]; then
+            echo "Found pre-normalized artifacts/lint-build.json; copying."
+            cp artifacts/lint-build.json reports/lint-build.json
+          else
+            echo "No pre-normalized lint-build.json; attempting fallback normalization."
+            node frameforge/scripts/normalize-lint-build.js reports/lint.json artifacts/build.json > reports/lint-build.json || true
+          fi
+
+      - name: Preflight (placeholder)
+        run: |
+          mkdir -p reports
+          echo '{"versionId":"sandbox","summary":{"blocking":0,"major":0,"minor":0,"waived":0},"entries":[]}' > reports/preflight.json
+
+      - name: SBOM (stub)
+        run: |
+          mkdir -p reports
+          echo '{"summary":"sbom-not-configured"}' > reports/sbom.json
+
+      - name: Upload Tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-report.json
+          path: reports/tests-report.json
+
+      - name: Upload A11y
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report.json
+          path: reports/a11y-report.json
+
+      - name: Upload Preflight
+        uses: actions/upload-artifact@v4
+        with:
+          name: preflight.json
+          path: reports/preflight.json
+
+      - name: Upload Lint
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint.json
+          path: reports/lint.json
+
+      - name: Upload lint-build.json (normalized)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-build.json
+          path: reports/lint-build.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom.json
+          path: reports/sbom.json

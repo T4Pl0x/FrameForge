@@ -1,0 +1,1505 @@
+{
+  "status": "success",
+  "modules": [
+    {
+      "source": "src/App-Refactored.jsx",
+      "dependencies": [
+        {
+          "module": "./App.css",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/App.css",
+          "coreModule": false,
+          "followable": false,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./bmadMethodology.js",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/bmadMethodology.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./ComponentRegistry.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/ComponentRegistry.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./components/Canvas.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/components/Canvas.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./components/MermaidCanvas.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/components/MermaidCanvas.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./components/Toolbar.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/components/Toolbar.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./hooks/useAppState.js",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/hooks/useAppState.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./hooks/useDocumentOperations.js",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/hooks/useDocumentOperations.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./hooks/useDragAndResize.js",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/hooks/useDragAndResize.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./utils/mermaid.js",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/utils/mermaid.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/App.jsx",
+        "src/main.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/App.css",
+      "followable": false,
+      "coreModule": false,
+      "couldNotResolve": false,
+      "matchesDoNotFollow": false,
+      "dependencyTypes": [
+        "local",
+        "import"
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/App-Refactored.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/bmadMethodology.js",
+      "dependencies": [],
+      "dependents": [
+        "src/App-Refactored.jsx",
+        "src/hooks/useDragAndResize.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/ComponentRegistry.jsx",
+      "dependencies": [
+        {
+          "module": "react",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/App-Refactored.jsx",
+        "src/components/Frame.jsx",
+        "src/hooks/useAppState.js",
+        "src/hooks/useDocumentOperations.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react/index.js",
+      "dependencies": [
+        {
+          "module": "./cjs/react.development.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/react/cjs/react.development.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./cjs/react.production.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/react/cjs/react.production.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/App-Refactored.jsx",
+        "src/ComponentRegistry.jsx",
+        "src/components/Canvas.jsx",
+        "src/components/Frame.jsx",
+        "src/components/MermaidCanvas.jsx",
+        "src/components/Toolbar.jsx",
+        "src/hooks/useAppState.js",
+        "src/ProfessionalMenu.jsx",
+        "src/main.jsx",
+        "node_modules/react-dom/cjs/react-dom-client.development.js",
+        "node_modules/react-dom/cjs/react-dom.development.js",
+        "node_modules/react-dom/cjs/react-dom.production.js",
+        "node_modules/react-dom/cjs/react-dom-client.production.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react/cjs/react.development.js",
+      "dependencies": [],
+      "dependents": [
+        "node_modules/react/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react/cjs/react.production.js",
+      "dependencies": [],
+      "dependents": [
+        "node_modules/react/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/components/Canvas.jsx",
+      "dependencies": [
+        {
+          "module": "./Frame.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/components/Frame.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "prop-types",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/prop-types/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/App-Refactored.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/components/Frame.jsx",
+      "dependencies": [
+        {
+          "module": "../ComponentRegistry.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/ComponentRegistry.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "prop-types",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/prop-types/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/components/Canvas.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/prop-types/index.js",
+      "dependencies": [
+        {
+          "module": "./factoryWithThrowingShims",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/prop-types/factoryWithThrowingShims.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./factoryWithTypeCheckers",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/prop-types/factoryWithTypeCheckers.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react-is",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "require"
+          ],
+          "resolved": "node_modules/react-is/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/components/Canvas.jsx",
+        "src/components/Frame.jsx",
+        "src/components/MermaidCanvas.jsx",
+        "src/components/Toolbar.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/prop-types/factoryWithThrowingShims.js",
+      "dependencies": [
+        {
+          "module": "./lib/ReactPropTypesSecret",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/prop-types/lib/ReactPropTypesSecret.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/prop-types/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/prop-types/lib/ReactPropTypesSecret.js",
+      "dependencies": [],
+      "dependents": [
+        "node_modules/prop-types/factoryWithThrowingShims.js",
+        "node_modules/prop-types/factoryWithTypeCheckers.js",
+        "node_modules/prop-types/checkPropTypes.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/prop-types/factoryWithTypeCheckers.js",
+      "dependencies": [
+        {
+          "module": "./checkPropTypes",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/prop-types/checkPropTypes.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./lib/has",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/prop-types/lib/has.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./lib/ReactPropTypesSecret",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/prop-types/lib/ReactPropTypesSecret.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "object-assign",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "require"
+          ],
+          "resolved": "node_modules/object-assign/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react-is",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "require"
+          ],
+          "resolved": "node_modules/react-is/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/prop-types/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/prop-types/checkPropTypes.js",
+      "dependencies": [
+        {
+          "module": "./lib/has",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/prop-types/lib/has.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./lib/ReactPropTypesSecret",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/prop-types/lib/ReactPropTypesSecret.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/prop-types/factoryWithTypeCheckers.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/prop-types/lib/has.js",
+      "dependencies": [],
+      "dependents": [
+        "node_modules/prop-types/factoryWithTypeCheckers.js",
+        "node_modules/prop-types/checkPropTypes.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/object-assign/index.js",
+      "dependencies": [],
+      "dependents": [
+        "node_modules/prop-types/factoryWithTypeCheckers.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react-is/index.js",
+      "dependencies": [
+        {
+          "module": "./cjs/react-is.development.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/react-is/cjs/react-is.development.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./cjs/react-is.production.min.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/react-is/cjs/react-is.production.min.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/prop-types/index.js",
+        "node_modules/prop-types/factoryWithTypeCheckers.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react-is/cjs/react-is.development.js",
+      "dependencies": [],
+      "dependents": [
+        "node_modules/react-is/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react-is/cjs/react-is.production.min.js",
+      "dependencies": [],
+      "dependents": [
+        "node_modules/react-is/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/components/MermaidCanvas.jsx",
+      "dependencies": [
+        {
+          "module": "mermaid",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "unknown"
+          ],
+          "resolved": "mermaid",
+          "coreModule": false,
+          "followable": false,
+          "couldNotResolve": true,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "prop-types",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/prop-types/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/App-Refactored.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "mermaid",
+      "followable": false,
+      "coreModule": false,
+      "couldNotResolve": true,
+      "matchesDoNotFollow": false,
+      "dependencyTypes": [
+        "unknown"
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/components/MermaidCanvas.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/components/Toolbar.jsx",
+      "dependencies": [
+        {
+          "module": "prop-types",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/prop-types/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/App-Refactored.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/hooks/useAppState.js",
+      "dependencies": [
+        {
+          "module": "../aiIntegration.js",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/aiIntegration.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "../ComponentRegistry.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/ComponentRegistry.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/App-Refactored.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/aiIntegration.js",
+      "dependencies": [],
+      "dependents": [
+        "src/hooks/useAppState.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/hooks/useDocumentOperations.js",
+      "dependencies": [
+        {
+          "module": "../ComponentRegistry.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/ComponentRegistry.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/App-Refactored.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/hooks/useDragAndResize.js",
+      "dependencies": [
+        {
+          "module": "../bmadMethodology.js",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/bmadMethodology.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/App-Refactored.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/utils/mermaid.js",
+      "dependencies": [],
+      "dependents": [
+        "src/App-Refactored.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/App.jsx",
+      "dependencies": [
+        {
+          "module": "./App-Refactored.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "export"
+          ],
+          "resolved": "src/App-Refactored.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/ProfessionalMenu.jsx",
+      "dependencies": [
+        {
+          "module": "react",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/main.jsx",
+      "dependencies": [
+        {
+          "module": "./App-Refactored.jsx",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/App-Refactored.jsx",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./main.css",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "import"
+          ],
+          "resolved": "src/main.css",
+          "coreModule": false,
+          "followable": false,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react-dom/client",
+          "moduleSystem": "es6",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "import"
+          ],
+          "resolved": "node_modules/react-dom/client.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "src/main.css",
+      "followable": false,
+      "coreModule": false,
+      "couldNotResolve": false,
+      "matchesDoNotFollow": false,
+      "dependencyTypes": [
+        "local",
+        "import"
+      ],
+      "dependencies": [],
+      "dependents": [
+        "src/main.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react-dom/client.js",
+      "dependencies": [
+        {
+          "module": "./cjs/react-dom-client.development.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/react-dom/cjs/react-dom-client.development.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./cjs/react-dom-client.production.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/react-dom/cjs/react-dom-client.production.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "src/main.jsx"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react-dom/cjs/react-dom-client.development.js",
+      "dependencies": [
+        {
+          "module": "react",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm-peer",
+            "require"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react-dom",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm-no-pkg",
+            "require"
+          ],
+          "resolved": "node_modules/react-dom/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "scheduler",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "require"
+          ],
+          "resolved": "node_modules/scheduler/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/react-dom/client.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react-dom/index.js",
+      "dependencies": [
+        {
+          "module": "./cjs/react-dom.development.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/react-dom/cjs/react-dom.development.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./cjs/react-dom.production.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/react-dom/cjs/react-dom.production.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/react-dom/cjs/react-dom-client.development.js",
+        "node_modules/react-dom/cjs/react-dom-client.production.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react-dom/cjs/react-dom.development.js",
+      "dependencies": [
+        {
+          "module": "react",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm-peer",
+            "require"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/react-dom/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react-dom/cjs/react-dom.production.js",
+      "dependencies": [
+        {
+          "module": "react",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm-peer",
+            "require"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/react-dom/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/scheduler/index.js",
+      "dependencies": [
+        {
+          "module": "./cjs/scheduler.development.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/scheduler/cjs/scheduler.development.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "./cjs/scheduler.production.js",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "local",
+            "require"
+          ],
+          "resolved": "node_modules/scheduler/cjs/scheduler.production.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/react-dom/cjs/react-dom-client.development.js",
+        "node_modules/react-dom/cjs/react-dom-client.production.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/scheduler/cjs/scheduler.development.js",
+      "dependencies": [],
+      "dependents": [
+        "node_modules/scheduler/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/scheduler/cjs/scheduler.production.js",
+      "dependencies": [],
+      "dependents": [
+        "node_modules/scheduler/index.js"
+      ],
+      "orphan": false,
+      "valid": true
+    },
+    {
+      "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+      "dependencies": [
+        {
+          "module": "react",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm-peer",
+            "require"
+          ],
+          "resolved": "node_modules/react/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "react-dom",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm-no-pkg",
+            "require"
+          ],
+          "resolved": "node_modules/react-dom/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        },
+        {
+          "module": "scheduler",
+          "moduleSystem": "cjs",
+          "dynamic": false,
+          "exoticallyRequired": false,
+          "dependencyTypes": [
+            "npm",
+            "require"
+          ],
+          "resolved": "node_modules/scheduler/index.js",
+          "coreModule": false,
+          "followable": true,
+          "couldNotResolve": false,
+          "matchesDoNotFollow": false,
+          "circular": false,
+          "valid": true
+        }
+      ],
+      "dependents": [
+        "node_modules/react-dom/client.js"
+      ],
+      "orphan": false,
+      "valid": true
+    }
+  ],
+  "cycles": [],
+  "violations": []
+}

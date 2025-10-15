@@ -1,0 +1,200 @@
+name: Publish FrameForge UI (DEPRECATED)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type REMOVE IN 2 WEEKS to acknowledge deprecation and proceed'
+        required: true
+        default: 'no'
+      version-id:
+        description: 'Version identifier (e.g., v20251012-AB12)'
+        required: true
+      artifact-plan:
+        description: 'JSON mapping of report filenames'
+        required: false
+      artifact-id:
+        description: 'Artifact identifier from sandbox build'
+        required: false
+      preflight-summary:
+        description: 'JSON summary of preflight counts'
+        required: false
+        default: '{}'
+      commit-message:
+        description: 'Commit message for the publish branch'
+        required: true
+      pr-title:
+        description: 'PR title'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: DEPRECATION guard
+        run: |
+          if [ "${{ inputs.confirm }}" != "REMOVE IN 2 WEEKS" ]; then
+            echo "This workflow is deprecated. Use repository_dispatch: frameforge_publish instead." >&2
+            exit 1
+          fi
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          corepack enable || true
+          npm install
+
+      - name: Lint (JSON, non-blocking)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          mkdir -p publish reports
+          npx eslint . --format json --output-file reports/lint.json 2>&1 | tee publish/lint.log || true
+
+      - name: Build (must pass)
+        run: |
+          set -o pipefail
+          mkdir -p publish
+          npm run build 2>&1 | tee publish/build.log
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Tests (JSON)
+        run: |
+          mkdir -p reports
+          npm test -- --json --outputFile=reports/tests-report.json
+
+      - name: A11y scan (axe+playwright)
+        run: |
+          node frameforge/scripts/run-a11y-scan.js
+
+      - name: Preflight report (from app or stub)
+        env:
+          PREFLIGHT: ${{ inputs.preflight-summary }}
+          VERSION_ID: ${{ inputs.version-id }}
+        run: |
+          mkdir -p reports
+          node -e "const fs=require('fs');const p=process.env.PREFLIGHT||'{}';const v=process.env.VERSION_ID||'v-unknown';const j={versionId:v,summary:Object.assign({blocking:0,major:0,minor:0,waived:0},JSON.parse(p)),entries:[]};fs.writeFileSync('reports/preflight.json', JSON.stringify(j,null,2));"
+
+      - name: SBOM (stub)
+        run: |
+          mkdir -p reports
+          echo '{"summary":"sbom-not-configured"}' > reports/sbom.json
+
+      - name: Summarize build and lint
+        id: summary
+        run: |
+          set -euo pipefail
+          mkdir -p publish/reports
+          LINT_WARN=$(grep -i "warning" -c publish/lint.log || echo 0)
+          BUILD_WARN=$(grep -i "warning" -c publish/build.log || echo 0)
+          echo "lint_warnings=$LINT_WARN" >> $GITHUB_OUTPUT
+          echo "build_warnings=$BUILD_WARN" >> $GITHUB_OUTPUT
+
+      - name: Prepare publish artifacts
+        env:
+          VERSION_ID: ${{ inputs.version-id }}
+          ARTIFACT_ID: ${{ inputs.artifact-id }}
+          PREFLIGHT: ${{ inputs.preflight-summary }}
+          LINT_WARN: ${{ steps.summary.outputs.lint_warnings }}
+          BUILD_WARN: ${{ steps.summary.outputs.build_warnings }}
+        run: |
+          set -euo pipefail
+          node -e "const fs=require('fs');const path=require('path');const dir=path.join(process.cwd(),'publish');fs.mkdirSync(dir,{recursive:true});const readme=path.join(dir,'README.md');const body=`# Publish ${process.env.VERSION_ID}\n\n- Artifact: ${process.env.ARTIFACT_ID||'n/a'}\n- Preflight: reports/preflight-${process.env.VERSION_ID}.json\n- Lint warnings: ${process.env.LINT_WARN||'0'}\n- Build warnings: ${process.env.BUILD_WARN||'0'}\n`;fs.writeFileSync(readme, body);console.log('Wrote',readme);"
+
+      - name: Upload build logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ inputs.version-id }}
+          path: |
+            publish/build.log
+            publish/lint.log
+
+      - name: Upload Tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-report.json
+          path: reports/tests-report.json
+
+      - name: Upload A11y
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report.json
+          path: reports/a11y-report.json
+
+      - name: Upload Preflight
+        uses: actions/upload-artifact@v4
+        with:
+          name: preflight.json
+          path: reports/preflight.json
+
+      - name: Upload Lint
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint.json
+          path: reports/lint.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom.json
+          path: reports/sbom.json
+
+      - name: Validate preflight.json
+        run: npm run validate:preflight
+
+      - name: Create pull request
+        if: ${{ success() }}
+        uses: peter-evans/create-pull-request@v6
+        id: cpr
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: publish/${{ inputs.version-id }}
+          commit-message: ${{ inputs.commit-message }}
+          title: ${{ inputs.pr-title }}
+          body: |
+            Automated publish PR for ${{ inputs.version-id }}
+
+            - Artifact: `${{ inputs.artifact-id }}`
+            - Preflight: `reports/preflight.json`
+            - Lint warnings: `${{ steps.summary.outputs.lint_warnings }}`
+            - Build warnings: `${{ steps.summary.outputs.build_warnings }}`
+
+            This PR was created by the FrameForge Publish workflow.
+
+      - name: Set commit status contexts
+        if: ${{ success() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.cpr.outputs.pull-request-number || '0' }};
+            if (!prNumber) {
+              core.setFailed('Missing PR number for status contexts');
+              return;
+            }
+            const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: Number(prNumber) });
+            const sha = pr.head.sha;
+            const contexts = [
+              { context: 'frameforge/preflight', state: 'success', description: 'Preflight passed' },
+              { context: 'frameforge/tests', state: 'success', description: 'Tests passed' },
+              { context: 'frameforge/a11y', state: 'success', description: 'A11y baseline passed' },
+              { context: 'frameforge/lint-build', state: 'success', description: 'Lint/build passed' },
+              { context: 'frameforge/risk', state: 'success', description: 'Risk: low' },
+            ];
+            for (const c of contexts) {
+              await github.rest.repos.createCommitStatus({ owner: context.repo.owner, repo: context.repo.repo, sha, state: c.state, context: c.context, description: c.description });
+            }

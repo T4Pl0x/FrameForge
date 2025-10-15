@@ -1,0 +1,73 @@
+{
+  "$id": "https://frameforge.dev/schemas/preflight.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["versionId", "summary", "entries"],
+  "properties": {
+    "versionId": { "type": "string" },
+    "summary": {
+      "type": "object",
+      "required": ["blocking", "major", "minor", "waived"],
+      "properties": {
+        "blocking": { "type": "integer", "minimum": 0 },
+        "major": { "type": "integer", "minimum": 0 },
+        "minor": { "type": "integer", "minimum": 0 },
+        "waived": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["level", "type", "targetId"],
+        "properties": {
+          "level": { "type": "string", "enum": ["blocking", "major", "minor"] },
+          "type": {
+            "type": "string",
+            "enum": [
+              "contrast.text",
+              "contrast.iconOnly",
+              "contrast.focusRing",
+              "tapTarget.tooSmall",
+              "focusability.missing",
+              "name.missing",
+              "modal.a11y",
+              "token.unresolved",
+              "nav.missingTarget",
+              "screen.unreachable",
+              "binding.emptyAction"
+            ]
+          },
+          "targetId": { "type": "string" },
+          "state": { "type": "string", "enum": ["base", "hover", "focus", "pressed", "disabled"] },
+          "ratio": { "type": "number" },
+          "required": { "type": "number" },
+          "colors": { "type": "object" },
+          "ring": {
+            "type": "object",
+            "properties": {
+              "color": { "type": "string" },
+              "thicknessPx": { "type": "number" },
+              "offsetPx": { "type": "number" }
+            }
+          },
+          "surroundingBand": {
+            "type": "object",
+            "properties": {
+              "widthPx": { "type": "number" },
+              "luminance": { "type": "number" }
+            }
+          },
+          "size": { "type": "string" },
+          "requiredSize": { "type": "string" },
+          "context": { "type": "object" },
+          "waiverHint": { "type": "string" },
+          "suggestedFix": { "type": "object" },
+          "opsPreview": { "type": "array", "items": { "type": "object" } },
+          "waived": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}
+

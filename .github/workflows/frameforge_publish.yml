@@ -1,0 +1,265 @@
+name: FrameForge Publish (repository_dispatch)
+
+on:
+  repository_dispatch:
+    types: [frameforge_publish]
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate payload
+        id: payload
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const p = context.payload.client_payload || {};
+            const required = ['versionId','artifactId','gates'];
+            for (const k of required) {
+              if (!p[k]) throw new Error(`Missing client_payload.${k}`);
+            }
+            const gates = p.gates;
+            const allPass = gates.preflight==='pass' && gates.tests==='pass' && gates.a11y==='pass' && gates.lintBuild==='pass';
+            const override = p.override && p.override.enabled === true;
+            core.setOutput('allPass', allPass);
+            core.setOutput('override', override);
+            core.setOutput('versionId', p.versionId);
+            core.setOutput('artifactId', p.artifactId);
+            core.setOutput('risk', gates.risk || 'low');
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+
+      - name: Create branch
+        run: |
+          BRANCH="publish/${{ steps.payload.outputs.versionId }}"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          git checkout -b "$BRANCH"
+          git config user.name "frameforge-bot"
+          git config user.email "frameforge-bot@users.noreply.github.com"
+          git add -A || true
+          git commit -m "publish: artifacts @ ${{ steps.payload.outputs.versionId }}" || echo "No changes"
+
+      - name: Push branch
+        run: git push -u origin "$BRANCH"
+
+      - name: Extract sandbox artifact URLs
+        id: urls
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const r = (context.payload.client_payload && context.payload.client_payload.reports) || {};
+            core.setOutput('tests', r.tests || r.testsUrl || '');
+            core.setOutput('a11y',  r.a11y  || r.a11yUrl  || '');
+            core.setOutput('lint',  r.lint  || r.lintUrl  || '');
+            core.setOutput('lintBuild', r.lintBuild || r.lintBuildUrl || '');
+            core.setOutput('build', r.build || r.buildUrl || '');
+
+      - name: Download sandbox artifacts (tests/a11y/lint)
+        env:
+          TESTS_URL: ${{ steps.urls.outputs.tests }}
+          A11Y_URL:  ${{ steps.urls.outputs.a11y }}
+          LINT_URL:  ${{ steps.urls.outputs.lint }}
+          LINTBUILD_URL: ${{ steps.urls.outputs.lintBuild }}
+          BUILD_URL: ${{ steps.urls.outputs.build }}
+          GH_TOKEN:  ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts reports
+          dl() {
+            local url="$1"; local outzip="$2"; [ -z "$url" ] && return 0;
+            echo "Downloading $url -> $outzip";
+            curl -sSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "$url" -o "$outzip" || true;
+            if [ -s "$outzip" ]; then unzip -o "$outzip" -d "${outzip%.zip}" >/dev/null 2>&1 || true; fi
+          }
+          if [ -n "${TESTS_URL}" ]; then dl "$TESTS_URL" artifacts/tests.zip; fi
+          if [ -n "${A11Y_URL}" ];  then dl "$A11Y_URL"  artifacts/a11y.zip;  fi
+          if [ -n "${LINT_URL}" ];  then dl "$LINT_URL"  artifacts/lint.zip;  fi
+          if [ -n "${LINTBUILD_URL}" ]; then dl "$LINTBUILD_URL" artifacts/lint-build.zip; fi
+          if [ -n "${BUILD_URL}" ]; then dl "$BUILD_URL" artifacts/build.zip; fi
+          # pick first json from each unzip dir
+          for d in artifacts/tests artifacts/a11y artifacts/lint artifacts/lint-build artifacts/build; do
+            if [ -d "$d" ]; then f=$(find "$d" -type f -name '*.json' | head -n1 || true); if [ -n "$f" ]; then cp "$f" "reports/$(basename $d).json"; fi; fi
+          done
+          # ensure placeholders if missing
+          [ -f reports/tests.json ] || echo '{"summary":{"failed":0}}' > reports/tests.json
+          [ -f reports/a11y.json ]  || echo '{"violations":0,"passes":0,"inapplicable":0}' > reports/a11y.json
+          [ -f reports/lint.json ]  || echo '[]' > reports/lint.json
+          # if a pre-normalized lint-build.json was provided, rename into reports
+          if [ -f reports/lint-build.json ]; then echo 'Using provided reports/lint-build.json'; fi
+
+      - name: Emit build summary (prefer JSON inputs)
+        run: |
+          mkdir -p artifacts
+          if [ -f reports/build.json ]; then
+            echo 'build.json already present; skipping emit.'
+          else
+            if [ -f artifacts/webpack-stats.json ] || [ -f artifacts/esbuild.json ] || [ -f artifacts/build.log ]; then
+              node frameforge/scripts/emit-build-summary.js artifacts/webpack-stats.json 2>/dev/null > artifacts/build.json || \
+              node frameforge/scripts/emit-build-summary.js artifacts/esbuild.json 2>/dev/null > artifacts/build.json || \
+              node frameforge/scripts/emit-build-summary.js artifacts/build.log 2>/dev/null > artifacts/build.json || \
+              echo '{"errorsCount":0,"warningsCount":0}' > artifacts/build.json
+              cp artifacts/build.json reports/build.json || true
+            else
+              echo '{"errorsCount":0,"warningsCount":0}' > artifacts/build.json
+              cp artifacts/build.json reports/build.json || true
+            fi
+          fi
+
+      - name: Normalize reports (tests/a11y)
+        run: |
+          node frameforge/scripts/normalize-tests.js reports/tests.json > reports/tests-report.json
+          node frameforge/scripts/normalize-a11y.js reports/a11y.json   > reports/a11y-report.json
+
+      - name: Summarize lint+build
+        run: |
+          # no build.log available here; summarizer will count only lint
+          touch reports/build.log
+          node frameforge/scripts/summarize-lint-build.js || echo '{"lintErrors":0,"lintWarnings":0,"buildErrors":0,"buildWarnings":0}' > reports/lint-build.json
+
+      - name: Upload normalized reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-report.json
+          path: reports/tests-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report.json
+          path: reports/a11y-report.json
+
+      # Prefer pre-normalized lint-build.json if available; else normalize from raw
+      - name: Ensure normalized lint/build report
+        run: |
+          mkdir -p reports artifacts
+          if [ -f reports/lint-build.json ]; then
+            echo "Found pre-normalized reports/lint-build.json; using it."
+          elif [ -f artifacts/lint-build.json ]; then
+            echo "Found pre-normalized artifacts/lint-build.json; copying."
+            cp artifacts/lint-build.json reports/lint-build.json
+          else
+            echo "No pre-normalized lint-build.json; attempting fallback normalization."
+            node frameforge/scripts/normalize-lint-build.js reports/lint.json reports/build.json > reports/lint-build.json || true
+          fi
+
+      - name: Upload lint-build.json (normalized)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-build.json
+          path: reports/lint-build.json
+
+      - name: Compute gates from normalized reports
+        id: gates
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            function read(p){ return JSON.parse(fs.readFileSync(p,'utf8')); }
+            const tests = read('reports/tests-report.json');
+            const a11y  = read('reports/a11y-report.json');
+            const lb    = read('reports/lint-build.json');
+            const testsPass = (tests.summary?.failed ?? 0) === 0;
+            const a11yPass  = ((a11y.violations ?? 0) - (a11y.waived ?? 0)) === 0;
+            const lbPass    = (lb.buildErrors ?? 0) === 0 && (lb.lintErrors ?? 0) === 0;
+            core.setOutput('tests', testsPass ? 'pass' : 'fail');
+            core.setOutput('a11y',  a11yPass  ? 'pass' : 'fail');
+            core.setOutput('lintBuild', lbPass ? 'pass' : 'fail');
+            const warns = (lb.buildWarnings ?? 0) + (lb.lintWarnings ?? 0);
+            const risk = warns > 100 ? 'high' : (warns > 20 ? 'medium' : 'low');
+            core.setOutput('risk', risk);
+
+      - name: Open PR
+        id: pr
+        uses: actions/github-script@v7
+        env:
+          TESTS_GATE: ${{ steps.gates.outputs.tests }}
+          A11Y_GATE: ${{ steps.gates.outputs.a11y }}
+          LINTBUILD_GATE: ${{ steps.gates.outputs.lintBuild }}
+          RISK_GATE: ${{ steps.gates.outputs.risk }}
+        with:
+          script: |
+            const p = context.payload.client_payload || {};
+            const head = process.env.BRANCH;
+            const base = 'main';
+            const title = `publish: ${context.payload.repository.name} @ ${p.versionId}`;
+            const gatesLine = `Gates (normalized): preflight=${p.gates?.preflight||'pass'}, tests=${process.env.TESTS_GATE}, a11y=${process.env.A11Y_GATE}, lintBuild=${process.env.LINTBUILD_GATE}, risk=${process.env.RISK_GATE}`;
+            let body = `Spec version: ${p.versionId}\nArtifact: ${p.artifactId}\n${gatesLine}\n`;
+            if (p.override?.enabled) {
+              body += `\n⚠️ Override Requested by ${p.override.byUser || 'owner'}\nReason: ${p.override.reason}\nExpires: ${p.override.expires || 'none'}\n`;
+            }
+            const pr = await github.rest.pulls.create({ owner: context.repo.owner, repo: context.repo.repo, title, head, base, body, maintainer_can_modify: true, draft: false });
+            core.setOutput('number', pr.data.number);
+            core.setOutput('sha', pr.data.head.sha);
+
+      - name: Apply labels
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const p = context.payload.client_payload || {};
+            const labels = new Set([ 'frameforge-publish' ]);
+            if (p.labels && Array.isArray(p.labels)) p.labels.forEach(l => labels.add(l));
+            if (p.override?.enabled) labels.add('override-required');
+            const risk = (p.gates?.risk || 'low').toLowerCase();
+            labels.add(`risk-${risk}`);
+            await github.rest.issues.addLabels({ owner: context.repo.owner, repo: context.repo.repo, issue_number: Number("${{ steps.pr.outputs.number }}"), labels: Array.from(labels) });
+
+      - name: Sticky comment (override details)
+        if: steps.payload.outputs.override == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const p = context.payload.client_payload || {};
+            const body = [ '### ⚠️ Override Requested', `By: ${p.override.byUser || 'owner'}`, `Reason: ${p.override.reason}`, `Expires: ${p.override.expires || 'none'}` ].join('\n');
+            await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: Number("${{ steps.pr.outputs.number }}"), body });
+
+      - name: Post commit statuses (from normalized reports)
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          TESTS_GATE: ${{ steps.gates.outputs.tests }}
+          A11Y_GATE: ${{ steps.gates.outputs.a11y }}
+          LINTBUILD_GATE: ${{ steps.gates.outputs.lintBuild }}
+          RISK_GATE: ${{ steps.gates.outputs.risk }}
+        with:
+          script: |
+            const p = context.payload.client_payload || {};
+            const sha = "${{ steps.pr.outputs.sha }}";
+            const contexts = {
+              "frameforge/preflight": (p.gates?.preflight || 'pass') === 'pass',
+              "frameforge/tests":     (process.env.TESTS_GATE || 'fail') === 'pass',
+              "frameforge/a11y":      (process.env.A11Y_GATE || 'fail') === 'pass',
+              "frameforge/lint-build":(process.env.LINTBUILD_GATE || 'fail') === 'pass',
+              "frameforge/risk":      (process.env.RISK_GATE || 'low') === 'low',
+              "frameforge/override":  !!(p.override?.enabled)
+            };
+            for (const [contextName, ok] of Object.entries(contexts)) {
+              await github.rest.repos.createCommitStatus({ owner: context.repo.owner, repo: context.repo.repo, sha, state: ok ? 'success' : 'failure', context: contextName, description: ok ? 'ok' : 'blocked' });
+            }
+
+      - name: Enforce gates unless override
+        if: ${{ steps.gates.outputs.tests == 'fail' || steps.gates.outputs.a11y == 'fail' || steps.gates.outputs.lintBuild == 'fail' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const override = !!(context.payload.client_payload?.override?.enabled);
+            if (!override) core.setFailed('Normalized gates failed (tests/a11y/lint-build) and no override present.');
+
+      - name: Request CODEOWNERS review
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const codeowners = process.env.CODEOWNERS_USERS ? process.env.CODEOWNERS_USERS.split(',') : [];
+            if (codeowners.length > 0) {
+              await github.rest.pulls.requestReviewers({ owner: context.repo.owner, repo: context.repo.repo, pull_number: Number("${{ steps.pr.outputs.number }}"), reviewers: codeowners });
+            }

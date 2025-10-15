@@ -1,0 +1,70 @@
+name: frameforge-override
+
+on:
+  repository_dispatch:
+    types: [frameforge_override_publish]
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  open-pr-override:
+    runs-on: ubuntu-latest
+    if: contains('owner-username,co-owner', github.event.client_payload.actor)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compose PR title/body
+        id: compose
+        run: |
+          VERSION="${{ github.event.client_payload.versionId }}"
+          REASON="${{ github.event.client_payload.reason }}"
+          echo "title=publish(override): FrameForge UI @ ${VERSION}" >> $GITHUB_OUTPUT
+          cat > pr.md << 'MD'
+          ## Publish (Override) — ${{ github.event.client_payload.versionId }}
+
+          **⚠️ OVERRIDE ENABLED**  
+          Reason: _${{ github.event.client_payload.reason }}_
+
+          Reports:
+          - Tests: ${{ github.event.client_payload.reports.tests }}
+          - A11y: ${{ github.event.client_payload.reports.a11y }}
+          - Preflight: ${{ github.event.client_payload.reports.preflight }}
+          - Lint: ${{ github.event.client_payload.reports.lint }}
+
+          > Visual runtime spec is canonical. Generated code is read-only.
+          MD
+
+      - name: Create/Update PR (override branch)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "publish(override): ${{ github.event.client_payload.versionId }}"
+          title: "${{ steps.compose.outputs.title }}"
+          body-path: "pr.md"
+          branch: "publish/${{ github.event.client_payload.versionId }}-override"
+          labels: "override,risk:override,needs-attention,frameforge-publish"
+          draft: false
+
+      - name: Set override status context
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: repo } = await github.rest.repos.get({ owner: context.repo.owner, repo: context.repo.repo });
+            const ref = `heads/${repo.default_branch}`;
+            const { data: refData } = await github.rest.git.getRef({ owner: context.repo.owner, repo: context.repo.repo, ref });
+            const sha = refData.object.sha;
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              state: 'success',
+              context: 'frameforge/override',
+              description: `Override approved by ${context.payload.client_payload.actor} — review required`,
+            });
+
