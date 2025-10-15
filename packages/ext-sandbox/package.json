@@ -1,0 +1,7 @@
+{
+  "name": "@frameforge/ext-sandbox",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.js",
+  "private": true
+}
