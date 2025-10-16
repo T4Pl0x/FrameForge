@@ -1,14 +1,15 @@
 export async function listIndices(){
   try {
-    const fs = await import('node:fs/promises');
-    const path = await import('node:path');
-    const raw = await fs.readFile(path.join(process.cwd(), 'spec', 'data.json'), 'utf8');
-    const json = JSON.parse(raw);
-    const indices = json?.rag?.indices || [];
-    return indices.map((i: any) => ({ ...i, health: '🟢' }));
-  } catch {
-    return [];
-  }
+    // In dev UI, read via Vite /@fs from repo root if available
+    const base = (import.meta as any).env?.VITE_REPO_ROOT as string | undefined;
+    if (base) {
+      const mod: any = await import(`/@fs/${base}/spec/data.json`);
+      const json = mod?.default || mod;
+      const indices = json?.rag?.indices || [];
+      return indices.map((i: any) => ({ ...i, health: '🟢' }));
+    }
+  } catch {}
+  return [];
 }
 
 export async function search(q: string){
@@ -19,4 +20,3 @@ export async function search(q: string){
     { title: `Result for "${q}" #2` }
   ];
 }
-

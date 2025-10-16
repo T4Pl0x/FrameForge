@@ -6,7 +6,7 @@ import { BottomBar } from "./workspace/BottomBar";
 import { Drawer } from "./workspace/Drawer";
 import { ApprovalsDrawer } from "./approvals/ApprovalsDrawer";
 import { GateBadges } from "./gates/GateBadges";
-import { AgentPanel } from "./agents/AgentPanel";
+import AgentPanel from "./agents/AgentPanel";
 import { ToolHub } from "./tools/ToolHub";
 import { RagPanel } from "./rag/RagPanel";
 import { installHotkeys } from "./hotkeys";
@@ -129,7 +129,14 @@ export default function AppFrame() {
 
       {FLAGS.WORKSPACE_SHELL && <BottomBar />}
 
-      {/* Approvals now shown as a widget card; drawer intentionally not rendered */}
+      {FLAGS.APPROVALS_DRAWER && (
+        <Drawer title="Approvals">
+          <ApprovalsDrawer />
+          {FLAGS.DEV_AUTO_APPROVE && (
+            <div className="muted" style={{marginTop:8}}>Dev auto-approve: ON</div>
+          )}
+        </Drawer>
+      )}
 
       <DebugOverlay flags={FLAGS} route={route} />
       {FLAGS.OS_NOTIFS && <Toaster />}

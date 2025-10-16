@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ProposeButton } from './ProposeButton';
 import type { PipelineSpec, PipelineExtensionSpec, PipelineWidget } from '@frameforge/shared/src/pipeline.types';
 
 type Diff = { op: 'add'|'replace'|'remove'; path: string; value?: any };
@@ -53,6 +54,10 @@ export function Builder(){
   return (
     <div style={{display:'grid', gridTemplateColumns:'320px 1fr', gap:12}}>
       <section className="widget">
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
+          <div className="widget-title" style={{margin:0}}>No-Code Builder</div>
+          <ProposeButton />
+        </div>
         <div className="widget-title">Builder</div>
         <div style={{display:'grid', gap:8}}>
           <input value={appId} onChange={e=>setAppId(e.target.value)} placeholder="app id" />
@@ -73,4 +78,3 @@ export function Builder(){
     </div>
   );
 }
-

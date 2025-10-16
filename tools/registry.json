@@ -8,6 +8,6 @@
       "lastPingISO": null,
       "permissions": { "callableBy": ["@frameforge/ext-ui"] }
     }
-  ]
+  ],
+  "extensions": []
 }
-

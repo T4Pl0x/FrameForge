@@ -16,6 +16,7 @@ interface ImportMetaEnv {
   readonly VITE_FF_PROMPT_LAB?: string;
   readonly VITE_FF_BUILDER?: string;
   readonly VITE_FF_CODEGEN?: string;
+  readonly VITE_FF_BROKER_ENFORCE?: string;
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv;

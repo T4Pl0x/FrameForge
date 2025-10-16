@@ -56,7 +56,7 @@ export const entry: ExtensionEntry = { mount(ctx){ ctx.openWindow({ title: "${sp
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": { "build": "echo \"web build ok\"" }
+  "scripts": { "build": "node -e \\\"console.log('web build ok')\\\"" }
 }
 `
     },
@@ -84,11 +84,11 @@ function makeDesktopTree(spec, outdir) {
     },
     { path: pkg, body:
 `{
-  "name": "${'${spec.extensions[0]?.name || "@frameforge/ext-"+spec.appId+"-desktop"}'}",
+  "name": "${spec.extensions[0]?.name || "@frameforge/ext-"+spec.appId+"-desktop"}",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": { "build": "echo \\\"desktop build ok\\\"" }
+  "scripts": { "build": "node -e \\\"console.log('desktop build ok')\\\"" }
 }
 `
     },
