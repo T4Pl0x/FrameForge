@@ -9,6 +9,24 @@ This repository contains the FrameForge OS workspace shell, kernel, extension ho
 
 See `packages/kernel/README.md` for kernel usage and `scripts/` for utilities.
 
+## Gates summary (dev)
+
+Set where the UI reads gate results (tests/a11y/lint-build):
+
+```bash
+# packages/app/.env.local
+VITE_GATES_SUMMARY_PATH=/.echo/gate-summary.json
+```
+
+Create/update the file during demos:
+
+```bash
+mkdir -p .echo
+echo '{"tests":"ok","a11y":"warn","lintBuild":"fail","ts":"2025-10-16T12:00:00Z"}' > .echo/gate-summary.json
+```
+
+The UI polls this file every 10s and shows badges: passing / warning / failing.
+
 Stabilize & Baseline (Phase 0)
 
 - Goal: Keep the current app stable while OS features land behind flags.
