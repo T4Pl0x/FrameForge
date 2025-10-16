@@ -5,8 +5,66 @@ export function ApprovalsDrawer() {
   const [refresh, setRefresh] = React.useState(0);
   const proposals = useProposals(refresh);
   const [msg, setMsg] = React.useState<string>("");
+  const [dryRun, setDryRun] = React.useState<boolean>(false);
+
+  async function applyDryRun(ticketId: string){
+    try {
+      const base = (import.meta as any).env?.VITE_REPO_ROOT as string | undefined;
+      if (!base) throw new Error('VITE_REPO_ROOT not set');
+      const art: any = await import(`/@fs/${base}/frameforge/reports/proposals/${ticketId}.json?${Date.now()}`);
+      const data = (art?.default || art) as any;
+      const regMod: any = await import(`/@fs/${base}/tools/registry.json?${Date.now()}`);
+      const original = (regMod?.default || regMod);
+      const patches = Array.isArray(data.patches) ? data.patches : [];
+      const next = applyPatches(original, patches);
+      setMsg(`Dry-run: would write tools/registry.json with ${patches.length} patch(es):\n` + JSON.stringify(next, null, 2));
+    } catch (e: any) {
+      setMsg(`Dry-run failed: ${e?.message || e}`);
+    }
+  }
+
+  function applyPatches(obj: any, arr: any[]) {
+    let target = JSON.parse(JSON.stringify(obj));
+    for (const p of arr) {
+      if (!['add','replace','remove'].includes(p.op)) throw new Error(`Unsupported op: ${p.op}`);
+      const [fileRef, jsonPtrRaw] = String(p.path).split('#');
+      if (!fileRef.endsWith('/tools/registry.json')) throw new Error('Patch targets unsupported file');
+      const segs = (jsonPtrRaw || '')
+        .replace(/^\/+/, '')
+        .split('/')
+        .filter(Boolean)
+        .map((s: string) => s.replace(/~1/g,'/').replace(/~0/g,'~'));
+      let parent = target;
+      for (let i = 0; i < Math.max(0, segs.length - 1); i++) {
+        const k = segs[i];
+        if (!(k in parent)) parent[k] = {};
+        parent = parent[k];
+      }
+      const key = segs[segs.length - 1];
+      if (p.op === 'add') {
+        if (key === undefined) throw new Error('Invalid add path');
+        if (Array.isArray(parent) && key === '-') parent.push(p.value);
+        else parent[key] = p.value;
+      } else if (p.op === 'replace') {
+        if (key === undefined) throw new Error('Invalid replace path');
+        if (!(key in parent)) throw new Error('Path does not exist for replace');
+        parent[key] = p.value;
+      } else if (p.op === 'remove') {
+        if (key === undefined) throw new Error('Invalid remove path');
+        if (Array.isArray(parent)) {
+          const idx = Number(key);
+          if (Number.isNaN(idx)) throw new Error('remove index must be numeric for arrays');
+          parent.splice(idx, 1);
+        } else {
+          delete parent[key];
+        }
+      }
+    }
+    return target;
+  }
 
   async function onApply(ticketId: string) {
+    if (dryRun) return applyDryRun(ticketId);
     setMsg("Applying…");
     try {
       const res = await fetch('/__ff/apply', {
@@ -26,6 +84,9 @@ export function ApprovalsDrawer() {
   return (
     <div className="text-sm">
       <div className="font-medium mb-2">Approvals</div>
+      <label style={{display:'inline-flex', alignItems:'center', gap:6, marginBottom:8}}>
+        <input type="checkbox" checked={dryRun} onChange={e=>setDryRun(e.target.checked)} /> Apply (dry-run)
+      </label>
       {proposals.length === 0 ? (
         <div className="opacity-70">No pending proposals.</div>
       ) : (
@@ -49,7 +110,7 @@ export function ApprovalsDrawer() {
                 <div style={{display:"flex", gap:8}}>
                   {!p.data.appliedAt && (
                     <button onClick={() => onApply(p.ticketId)} style={{padding:"4px 8px", borderRadius:6}}>
-                      Apply
+                      {dryRun ? 'Preview Apply' : 'Apply'}
                     </button>
                   )}
                 </div>

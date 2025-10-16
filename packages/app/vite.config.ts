@@ -1,15 +1,18 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tsconfigPaths()],
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, '../shared/src'),
-      '@kernel': path.resolve(__dirname, '../kernel/src')
+      '@os': path.resolve(__dirname, '../os/src'),
+      '@kernel': path.resolve(__dirname, '../kernel/src'),
+      '@app': path.resolve(__dirname, './src')
     }
   },
   server: {
@@ -135,7 +138,8 @@ export default defineConfig({
             fs.writeFileSync(artifactPath, JSON.stringify(appliedMark, null, 2));
 
             res.setHeader('content-type', 'application/json');
-            res.end(JSON.stringify({ ok: true, registryPath, backup, changes: patches.length }));
+            const nextBody = JSON.stringify(next, null, 2);
+            res.end(JSON.stringify({ ok: true, registryPath, backup, changes: patches.length, registry: nextBody }));
           } catch (e: any) {
             res.statusCode = 500; res.end(JSON.stringify({ error: e?.message || 'apply failed' }));
           }

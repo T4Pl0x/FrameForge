@@ -18,11 +18,10 @@ export async function readGateSummary(path=DEFAULT_PATH): Promise<GateSummary> {
       gates: {
         tests: { state: map(raw.tests?.state ?? raw.tests) },
         a11y: { state: map(raw.a11y?.state ?? raw.a11y) },
-        lintBuild: { state: map(raw.lintBuild?.state ?? raw.lint ?? raw.build) }
+        lintBuild: { state: map(raw.lintBuild?.state ?? raw.lintBuild ?? raw.lint ?? raw.build) }
       }
     };
   } catch {
     return { gates: { tests:{state:"unknown"}, a11y:{state:"unknown"}, lintBuild:{state:"unknown"} } };
   }
 }
-

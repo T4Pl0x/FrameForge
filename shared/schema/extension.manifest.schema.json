@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://frameforge.local/schema/extension.manifest.schema.json",
+  "title": "ExtensionManifest",
+  "type": "object",
+  "required": ["name","version"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string" },
+    "entry": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "worker": { "type": "string" },
+            "module": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "capabilities": { "type": "array", "items": { "type": "string" } },
+    "permissions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}
+
