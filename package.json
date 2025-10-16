@@ -7,6 +7,9 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "pnpm --filter @frameforge/app dev",
+    "build": "pnpm --filter @frameforge/app build",
+    "preview": "pnpm --filter @frameforge/app preview",
     "validate:spec": "node scripts/validate-spec.mjs",
     "migrate:spec": "node scripts/migrate-spec.mjs --from v1 --to v1.1",
     "reports:verify:one": "node scripts/emit-build-summary.js --mode one",
@@ -16,4 +19,3 @@
     "node": ">=18"
   }
 }
-
