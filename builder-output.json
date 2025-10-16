@@ -1,13 +1,1 @@
-﻿{
-    "appId":  "demoapp",
-    "extensions":  [
-                       {
-                           "widgets":  [
-
-                                       ],
-                           "name":  "@frameforge/ext-demoapp",
-                           "entry":  "packages/ext-demoapp/src/entry.tsx"
-                       }
-                   ],
-    "version":  "v1"
-}
+﻿{ "version":"v1","appId":"demoapp","extensions":[{"name":"@frameforge/ext-demoapp","entry":"packages/ext-demoapp/src/entry.tsx","widgets":[]} ] }

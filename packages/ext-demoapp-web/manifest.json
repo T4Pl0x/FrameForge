@@ -1,0 +1,8 @@
+{
+  "name": "@frameforge/ext-demoapp",
+  "id": "demoapp-web",
+  "version": "0.1.0",
+  "entry": "./src/entry.tsx",
+  "permissions": ["propose:spec"],
+  "capabilities": { "ui": true }
+}
