@@ -1,0 +1,9 @@
+{
+  "name": "@frameforge/ext-ui",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/worker.js",
+  "files": ["dist", "manifest.json"],
+  "private": true
+}
+

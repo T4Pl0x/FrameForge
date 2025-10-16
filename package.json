@@ -1,0 +1,19 @@
+{
+  "name": "frameforge-os",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "validate:spec": "node scripts/validate-spec.mjs",
+    "migrate:spec": "node scripts/migrate-spec.mjs --from v1 --to v1.1",
+    "reports:verify:one": "node scripts/emit-build-summary.js --mode one",
+    "reports:verify:matrix": "node scripts/emit-build-summary.js --mode matrix"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+

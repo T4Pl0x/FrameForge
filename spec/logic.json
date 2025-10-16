@@ -1,0 +1,27 @@
+{
+  "agents": [
+    {
+      "id": "Orchestrator",
+      "role": "orchestrator",
+      "policies": {
+        "askWhenUncertain": true,
+        "maxRisk": "medium",
+        "selfHeal": { "retries": 2, "backoffMs": 500 },
+        "rateLimit": { "rpm": 60, "burst": 10 },
+        "cot": false,
+        "cove": "balanced",
+        "memory": true
+      }
+    },
+    {
+      "id": "KnowledgeOps",
+      "role": "rag-qa",
+      "rag": {
+        "indices": ["docs_index"],
+        "reranker": "cross-encoder-msmarco",
+        "topK": 5
+      }
+    }
+  ]
+}
+

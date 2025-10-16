@@ -1,0 +1,13 @@
+{
+  "tools": [
+    {
+      "id": "a11y_scan",
+      "kind": "mcp",
+      "endpoint": "https://example.com/a11y",
+      "status": "offline",
+      "lastPingISO": null,
+      "permissions": { "callableBy": ["@frameforge/ext-ui"] }
+    }
+  ]
+}
+

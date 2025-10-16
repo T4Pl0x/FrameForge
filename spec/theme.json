@@ -1,0 +1,10 @@
+{
+  "name": "FrameForge Default",
+  "colors": {
+    "bg": "#0f1115",
+    "panel": "#161a22",
+    "text": "#e5e7eb",
+    "muted": "#9ca3af",
+    "accent": "#34d399"
+  }
+}

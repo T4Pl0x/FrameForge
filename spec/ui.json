@@ -1,0 +1,17 @@
+{
+  "layout": {
+    "regions": [
+      { "id": "dock", "side": "left", "width": 280 },
+      { "id": "surface", "side": "center" },
+      { "id": "tasks", "side": "right", "width": 360 },
+      { "id": "status", "side": "bottom", "height": 28 }
+    ],
+    "activeExtension": "@frameforge/ext-ui"
+  },
+  "selection": {
+    "screenId": null,
+    "frameId": null,
+    "componentId": null
+  }
+}
+

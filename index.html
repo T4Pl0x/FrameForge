@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Visual AI Coding - Wireframe Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg: #0e0f13;
+      --panel: #151821;
+      --panel-2: #1a1f2b;
+      --text: #eaeef7;
+      --muted: #aab3c5;
+      --brand: #6aa6ff;
+      --brand-2: #7ae1ff;
+      --accent: #7cffd8;
+      --danger: #ff6a7a;
+      --grid: rgba(255,255,255,0.06);
+      --wire: rgba(255,255,255,0.28);
+      --wire-2: rgba(255,255,255,0.18);
+      --shadow: 0 8px 24px rgba(0,0,0,0.4);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-lg: 16px;
+      --gap: 12px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0a0b0f, #0d0f16);
+      color: var(--text);
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      overflow: hidden;
+    }
+
+    .app {
+      height: 100%;
+      display: grid;
+      grid-template-rows: 56px 1fr;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: linear-gradient(180deg, #11131a, #0f1218);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .brand {
+      display:flex; align-items:center; gap:10px; font-weight:600; letter-spacing:.2px;
+      padding: 6px 10px; border-radius: 10px; background: #0d1017; border: 1px solid rgba(255,255,255,0.06);
+    }
+    .brand .dot { width:10px; height:10px; background:linear-gradient(135deg,var(--brand),var(--brand-2)); border-radius:50%; box-shadow: 0 0 12px rgba(122,225,255,.6); }
+
+    .spacer { flex: 1; }
+
+    .btn {
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: #121521;
+      color: var(--text);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: .15s ease;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn:hover { background: #151a28; transform: translateY(-1px); }
+    .btn.primary {
+      background: linear-gradient(180deg, #2a7fff, #1b65ff);
+      border: none;
+      color: white;
+    }
+    .btn.ghost { background: transparent; border-color: rgba(255,255,255,0.12); }
+    .btn.danger { background: #27161a; border-color: #3b1b23; color: #ff99a5; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr 340px;
+      gap: 12px;
+      padding: 12px;
+      height: calc(100vh - 56px);
+    }
+
+    aside, .workspace {
+      background: linear-gradient(180deg, var(--panel), #121520);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      min-height: 0;
+    }
+
+    /* Left sidebar */
+    .sidebar {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+    .section {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .section h3 {
+      margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted);
+    }
+    .goal-input {
+      width: 100%; resize: vertical; min-height: 72px; max-height: 160px;
+      background: #0f121a; border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text); border-radius: 10px; padding: 8px 10px;
+    }
+
+    .palette {
+      display: grid; gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .palette .item {
+      user-select: none;
+      cursor: grab;
+      padding: 10px;
+      border: 1px dashed rgba(255,255,255,0.2);
+      border-radius: 10px;
+      background: #10131c;
+      color: var(--text);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .palette .item:hover { background: #121726; }
+    .palette .item:active { cursor: grabbing; }
+
+    .context-list {
+      height: 100%; overflow: auto; padding: 12px;
+    }
+    .chip {
+      display: grid; gap: 6px;
+      background: #10131c; border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+      border-radius: 10px; padding: 10px;
+      margin-bottom: 8px;
+    }
+    .chip .meta { font-size: 11px; color: var(--muted); display:flex; justify-content:space-between; }
+
+    /* Workspace + Canvas */
+    .workspace {
+      position: relative; display: grid; grid-template-rows: auto 1fr;
+    }
+    .workspace .toolbar {
+      display: flex; gap: 8px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, #121620, #111520);
+    }
+    .canvas-wrap {
+      position: relative; overflow: auto;
+    }
+    .canvas {
+      position: relative;
+      min-width: 1400px; min-height: 1000px;
+      background:
+        linear-gradient(0deg, transparent 24px, var(--grid) 25px),
+        linear-gradient(90deg, transparent 24px, var(--grid) 25px);
+      background-size: 25px 25px;
+      padding: 24px;
+    }
+
+    /* Goal canvas (sticky notes) */
+    .goal-board {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .goal-note {
+      background: #0c2a1c;
+      border: 1px solid #11442c;
+      color: #a1fbcf;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+
+    /* Nodes on canvas */
+    .node {
+      position: absolute;
+      border: 2px dashed var(--wire);
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      color: var(--text);
+      user-select: none;
+      min-width: 80px; min-height: 40px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      backdrop-filter: blur(2px);
+    }
+    .node .chrome {
+      position: absolute; top: -28px; left: 0; height: 24px;
+      display: flex; align-items: center; gap: 6px; padding: 0 6px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      opacity: 0; pointer-events: none;
+      transform: translateY(4px);
+      transition: .15s ease;
+    }
+    .node:hover .chrome, .node.selected .chrome {
+      opacity: 1; pointer-events: auto; transform: translateY(0);
+    }
+    .node .chrome .mini {
+      font-size: 11px; padding: 4px 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.3); color: var(--text); cursor: pointer;
+    }
+    .node .content {
+      pointer-events: none;
+      padding: 10px;
+      font-size: 13px; color: #dfe7ff;
+    }
+    .node[data-type="button"] .content {
+      display:inline-block; border:1px solid var(--wire-2); padding:8px 12px; border-radius:8px; background: rgba(255,255,255,0.06);
+    }
+    .node[data-type="input"] .content,
+    .node[data-type="textarea"] .content {
+      display:block; background: rgba(255,255,255,0.02); border:1px dashed var(--wire-2); border-radius:8px; padding:8px; color:#9fb1d8;
+    }
+    .node[data-type="image"] .content {
+      display:flex; align-items:center; justify-content:center; color:#9fb1d8; height:100%;
+    }
+    .node .resize {
+      position: absolute; right: -6px; bottom: -6px;
+      width: 12px; height: 12px; border-radius: 3px;
+      background: var(--brand); border: 1px solid #163a7a; cursor: nwse-resize;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      opacity: .9;
+    }
+    .node.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,255,216,0.12), var(--shadow); }
+
+    /* FAB + Popover */
+    .fab {
+      position: absolute; right: 24px; bottom: 24px;
+      width: 56px; height: 56px; border-radius: 28px;
+      background: linear-gradient(180deg, #2a7fff, #1b65ff);
+      display:flex; align-items:center; justify-content:center; color:white; font-size: 24px;
+      border: none; cursor: pointer; box-shadow: var(--shadow);
+    }
+    .popover {
+      position: absolute; right: 24px; bottom: 88px;
+      width: 320px; padding: 12px; border-radius: 12px;
+      background: #0f1320; border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: var(--shadow);
+      display: none; z-index: 10;
+    }
+    .popover.open { display: block; }
+    .field { display:grid; gap:6px; margin-bottom: 10px; }
+    .field label { color: var(--muted); font-size: 12px; }
+    .field input, .field select, .field textarea {
+      border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+      background: #0c0f18; color: var(--text); padding: 8px 10px;
+    }
+    .note { color: var(--muted); font-size: 12px; }
+
+    /* Inspector */
+    .inspector {
+      display: grid; grid-template-rows: auto 1fr auto;
+    }
+    .inspector .block { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .inspector .block h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+    .props-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+    .props-grid .field { margin: 0; }
+    .codebox {
+      width: 100%; min-height: 140px; max-height: 260px; resize: vertical;
+      background: #0b0f18; border: 1px solid rgba(255,255,255,0.1); color: #cfe3ff; border-radius: 8px; padding: 10px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+    }
+
+    /* Toast */
+    .toast {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,0.12); color: #dfe7ff;
+      padding: 8px 12px; border-radius: 10px; display:none; z-index: 50;
+    }
+    .toast.show { display: inline-block; }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span> Visual AI Coding</div>
+      <button id="btnExportHTML" class="btn">Export HTML</button>
+      <button id="btnExportJSON" class="btn">Export JSON</button>
+      <label class="btn ghost" style="position:relative; overflow:hidden;">
+        Import JSON
+        <input id="fileImport" type="file" accept="application/json" style="position:absolute; inset:0; opacity:0; cursor:pointer;">
+      </label>
+      <div class="spacer"></div>
+      <button id="btnAI" class="btn">Ask AI (stub)</button>
+      <button id="btnSave" class="btn">Save</button>
+      <button id="btnLoad" class="btn">Load</button>
+    </div>
+
+    <div class="layout">
+      <!-- Left: Goals + Palette + Context list -->
+      <aside class="sidebar">
+        <div class="section">
+          <h3>Goal Canvas</h3>
+          <textarea id="goalInput" class="goal-input" placeholder="Describe your product goal(s), users, success criteria..."></textarea>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button id="btnAddGoal" class="btn">Add Goal</button>
+            <button id="btnClearGoals" class="btn ghost">Clear</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Components</h3>
+          <div class="palette" id="palette">
+            <!-- Filled by JS -->
+          </div>
+          <div class="note" style="margin-top:8px;">Tip: Drag items onto the canvas, or use the + button to add with context.</div>
+        </div>
+
+        <div class="context-list" id="contextList">
+          <h3 style="margin:0 0 8px;">Context</h3>
+          <!-- Context chips -->
+        </div>
+      </aside>
+
+      <!-- Middle: Workspace + Canvas -->
+      <div class="workspace">
+        <div class="toolbar">
+          <button id="btnExportSelection" class="btn">Export Selection</button>
+          <button id="btnDeleteSelected" class="btn danger">Delete Selected</button>
+          <div class="spacer"></div>
+          <div class="note">Hold and drag elements to move. Drag corner to resize. Click to select.</div>
+        </div>
+        <div class="canvas-wrap">
+          <div id="toast" class="toast">Click on the canvas to place your component…</div>
+          <div id="canvas" class="canvas" tabindex="0" aria-label="Wireframe canvas">
+            <div id="goalBoard" class="goal-board"></div>
+            <!-- Nodes get rendered here -->
+            <button id="fab" class="fab" title="Add with context">+</button>
+            <div id="popover" class="popover" role="dialog" aria-modal="true">
+              <div class="field">
+                <label>Context / Intent</label>
+                <textarea id="ctxText" rows="3" placeholder="Why are you adding this component? What should it do?"></textarea>
+              </div>
+              <div class="field">
+                <label>Component</label>
+                <select id="ctxComponent"></select>
+              </div>
+              <div class="field">
+                <label>Initial Text (optional)</label>
+                <input id="ctxLabel" placeholder="e.g., Primary Action">
+              </div>
+              <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button id="ctxCancel" class="btn ghost">Cancel</button>
+                <button id="ctxPlace" class="btn primary">Place on Canvas</button>
+              </div>
+              <div class="note" style="margin-top:8px;">After clicking "Place", click anywhere on the canvas to position it.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Inspector + Comments + Code preview -->
+      <aside class="inspector">
+        <div class="block">
+          <h3>Selection</h3>
+          <div id="selInfo" class="note">No selection</div>
+        </div>
+        <div class="block">
+          <h3>Properties</h3>
+          <div class="props-grid" id="propsGrid">
+            <!-- Dynamic properties -->
+          </div>
+        </div>
+        <div class="block">
+          <h3>Comments</h3>
+          <div class="field">
+            <label>Component Notes</label>
+            <textarea id="compNotes" rows="4" placeholder="Notes about the selected component..."></textarea>
+          </div>
+          <div class="field">
+            <label>Project Comments</label>
+            <textarea id="projectComments" rows="4" placeholder="General comments..."></textarea>
+          </div>
+        </div>
+        <div class="block" style="border-bottom:none;">
+          <h3>Code Preview</h3>
+          <textarea id="codePreview" class="codebox" spellcheck="false"></textarea>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button id="btnCopyCode" class="btn">Copy</button>
+            <button id="btnRefreshCode" class="btn ghost">Refresh</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // =====================
+    // State and Constants
+    // =====================
+
+    const GRID = 25;
+    const PALETTE = [
+      { type: 'heading', label: 'Heading' },
+      { type: 'text', label: 'Text' },
+      { type: 'button', label: 'Button' },
+      { type: 'input', label: 'Input' },
+      { type: 'textarea', label: 'Textarea' },
+      { type: 'image', label: 'Image' },
+      { type: 'card', label: 'Card' },
+      { type: 'container', label: 'Container' },
+    ];
+
+    let state = {
+      goals: [],
+      projectComments: '',
+      contextItems: [],
+      components: [],
+      selectedId: null,
+      pendingAdd: null, // { type, context, label }
+    };
+
+    // =====================
+    // Helpers
+    // =====================
+
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    const uid = () => Math.random().toString(36).slice(2, 9);
+
+    const snap = (n) => Math.round(n / GRID) * GRID;
+
+    function nowISO() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function serialize() {
+      return JSON.stringify(state, null, 2);
+    }
+
+    function deserialize(json) {
+      try {
+        state = JSON.parse(json);
+        if (!state.components) state.components = [];
+        if (!state.contextItems) state.contextItems = [];
+        if (!state.goals) state.goals = [];
+        if (!('projectComments' in state)) state.projectComments = '';
+        renderAll();
+      } catch (e) {
+        alert('Invalid JSON');
+      }
+    }
+
+    // =====================
+    // UI Build (static)
+    // =====================
+
+    const canvas = $('#canvas');
+    const goalBoard = $('#goalBoard');
+    const palette = $('#palette');
+    const selInfo = $('#selInfo');
+    const propsGrid = $('#propsGrid');
+    const compNotes = $('#compNotes');
+    const projectComments = $('#projectComments');
+    const codePreview = $('#codePreview');
+    const toast = $('#toast');
+    const fab = $('#fab');
+    const popover = $('#popover');
+    const ctxText = $('#ctxText');
+    const ctxComponent = $('#ctxComponent');
+    const ctxLabel = $('#ctxLabel');
+
+    // Palette items
+    function buildPalette() {
+      palette.innerHTML = '';
+      for (const p of PALETTE) {
+        const el = document.createElement('div');
+        el.className = 'item';
+        el.draggable = true;
+        el.textContent = p.label;
+        el.dataset.type = p.type;
+
+        el.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', p.type);
+        });
+
+        palette.appendChild(el);
+      }
+    }
+
+    // Populate component dropdown in the + popover
+    function buildComponentDropdown() {
+      ctxComponent.innerHTML = '';
+      for (const p of PALETTE) {
+        const opt = document.createElement('option');
+        opt.value = p.type;
+        opt.textContent = p.label;
+        ctxComponent.appendChild(opt);
+      }
+    }
+
+    // =====================
+    // Canvas interactions
+    // =====================
+
+    canvas.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+
+    canvas.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const type = e.dataTransfer.getData('text/plain');
+      if (type) {
+        const rect = canvas.getBoundingClientRect();
+        const x = snap(e.clientX - rect.left - 40);
+        const y = snap(e.clientY - rect.top - 20);
+        const node = createComponent(type, x, y);
+        state.components.push(node);
+        select(node.id);
+        renderAll();
+      }
+    });
+
+    // Place pendingAdd by clicking canvas
+    canvas.addEventListener('click', (e) => {
+      if (state.pendingAdd) {
+        const rect = canvas.getBoundingClientRect();
+        const x = snap(e.clientX - rect.left - 60);
+        const y = snap(e.clientY - rect.top - 30);
+        const node = createComponent(state.pendingAdd.type, x, y, {
+          label: state.pendingAdd.label,
+          context: state.pendingAdd.context,
+        });
+        state.components.push(node);
+        // Store context item
+        addContextItem(state.pendingAdd.context, state.pendingAdd.type, node.id);
+        state.pendingAdd = null;
+        hideToast();
+        closePopover();
+        select(node.id);
+        renderAll();
+      }
+    });
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+    function hideToast() {
+      toast.classList.remove('show');
+    }
+
+    // =====================
+    // Component model
+    // =====================
+
+    function createComponent(type, x, y, opts = {}) {
+      const base = {
+        id: uid(),
+        type,
+        x, y,
+        w: 200,
+        h: 80,
+        text: defaultText(type),
+        placeholder: defaultPlaceholder(type),
+        notes: '',
+        z: Date.now(),
+        style: {},
+      };
+      if (opts.label) base.text = opts.label;
+      if (opts.context) base.notes = 'Context: ' + opts.context;
+      // Type-specific defaults
+      switch(type) {
+        case 'heading': base.w=300; base.h=60; base.text = base.text || 'Section Heading'; break;
+        case 'text': base.w=360; base.h=80; base.text = base.text || 'Lorem ipsum dolor sit amet.'; break;
+        case 'button': base.w=140; base.h=44; base.text = base.text || 'Button'; break;
+        case 'input': base.w=240; base.h=44; base.placeholder = base.placeholder || 'Type here'; break;
+        case 'textarea': base.w=300; base.h=100; base.placeholder = base.placeholder || 'Enter details...'; break;
+        case 'image': base.w=240; base.h=160; base.text = 'Image'; break;
+        case 'card': base.w=300; base.h=180; base.text = 'Card'; break;
+        case 'container': base.w=400; base.h=240; base.text = 'Container'; break;
+      }
+      return base;
+    }
+
+    function defaultText(type) {
+      switch(type) {
+        case 'heading': return 'Heading';
+        case 'text': return 'Paragraph text';
+        case 'button': return 'Action';
+        case 'image': return 'Image';
+        case 'card': return 'Card';
+        case 'container': return 'Container';
+        default: return '';
+      }
+    }
+    function defaultPlaceholder(type) {
+      switch(type) {
+        case 'input': return 'Enter value';
+        case 'textarea': return 'Write something…';
+        default: return '';
+      }
+    }
+
+    // =====================
+    // Rendering
+    // =====================
+
+    function renderAll() {
+      renderGoals();
+      renderContext();
+      renderCanvas();
+      renderInspector();
+      refreshCodePreview();
+      projectComments.value = state.projectComments || '';
+    }
+
+    function renderGoals() {
+      goalBoard.innerHTML = '';
+      for (const g of state.goals) {
+        const note = document.createElement('div');
+        note.className = 'goal-note';
+        note.innerHTML = `<div style="font-weight:600;">${escapeHTML(g.text)}</div><div class="meta">${g.date}</div>`;
+        goalBoard.appendChild(note);
+      }
+    }
+
+    function renderContext() {
+      const list = $('#contextList');
+      // Remove everything after header
+      list.innerHTML = '<h3 style="margin:0 0 8px;">Context</h3>';
+      for (const c of state.contextItems) {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.innerHTML = `
+          <div style="font-weight:600;">${escapeHTML(c.text || '')}</div>
+          <div class="meta">
+            <span>${c.component}</span>
+            <span>${c.date}</span>
+          </div>
+          <div class="meta">
+            <span>Linked: ${c.componentId ? c.componentId : '—'}</span>
+            <button class="btn ghost" data-remove="${c.id}">Remove</button>
+          </div>
+        `;
+        chip.querySelector('[data-remove]').addEventListener('click', () => {
+          state.contextItems = state.contextItems.filter(x => x.id !== c.id);
+          renderContext();
+        });
+        list.appendChild(chip);
+      }
+    }
+
+    function buildNodeEl(node) {
+      const el = document.createElement('div');
+      el.className = 'node';
+      el.dataset.id = node.id;
+      el.dataset.type = node.type;
+      el.style.left = node.x + 'px';
+      el.style.top = node.y + 'px';
+      el.style.width = node.w + 'px';
+      el.style.height = node.h + 'px';
+      el.style.zIndex = node.z;
+
+      const chrome = document.createElement('div');
+      chrome.className = 'chrome';
+      chrome.innerHTML = `
+        <div class="mini" data-action="front">Front</div>
+        <div class="mini" data-action="back">Back</div>
+        <div class="mini" data-action="delete" style="color:#ff99a5; border-color:#3b1b23; background:#27161a;">Delete</div>
+      `;
+      el.appendChild(chrome);
+
+      const content = document.createElement('div');
+      content.className = 'content';
+      content.innerHTML = renderNodeContent(node);
+      el.appendChild(content);
+
+      const resize = document.createElement('div');
+      resize.className = 'resize';
+      el.appendChild(resize);
+
+      // Events
+      el.addEventListener('pointerdown', (e) => {
+        if (e.target === resize) return; // resizing handled separately
+        e.preventDefault();
+        select(node.id);
+        startDrag(el, e);
+      });
+      resize.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        select(node.id);
+        startResize(el, e);
+      });
+
+      chrome.addEventListener('click', (e) => {
+        const action = e.target.dataset.action;
+        if (!action) return;
+        e.stopPropagation();
+        if (action === 'delete') {
+          state.components = state.components.filter(c => c.id !== node.id);
+          if (state.selectedId === node.id) state.selectedId = null;
+          renderAll();
+        } else if (action === 'front') {
+          node.z = Date.now();
+          renderCanvas();
+        } else if (action === 'back') {
+          node.z = 1;
+          renderCanvas();
+        }
+      });
+
+      if (state.selectedId === node.id) el.classList.add('selected');
+      return el;
+    }
+
+    function renderNodeContent(node) {
+      const t = escapeHTML(node.text || '');
+      const ph = escapeHTML(node.placeholder || '');
+      switch (node.type) {
+        case 'heading': return `<div style="font-size:18px; font-weight:700;">${t || 'Heading'}</div>`;
+        case 'text': return `<div style="color:#9fb1d8;">${t || 'Paragraph'}</div>`;
+        case 'button': return `${t || 'Button'}`;
+        case 'input': return `<div>${ph || 'Input'}</div>`;
+        case 'textarea': return `<div>${ph || 'Textarea'}</div>`;
+        case 'image': return `<div>⛰ Image</div>`;
+        case 'card': return `<div style="font-weight:600;">Card</div><div style="font-size:12px; color:#9fb1d8;">${t || 'Content'}</div>`;
+        case 'container': return `<div style="font-weight:600;">Container</div><div style="font-size:12px; color:#9fb1d8;">${t || ''}</div>`;
+        default: return t;
+      }
+    }
+
+    function renderCanvas() {
+      // Remove all nodes but keep goalBoard, fab, popover, toast
+      $$('.node', canvas).forEach(n => n.remove());
+      // Draw nodes
+      state.components.forEach(node => {
+        const el = buildNodeEl(node);
+        canvas.appendChild(el);
+      });
+    }
+
+    function select(id) {
+      state.selectedId = id;
+      renderInspector();
+      renderCanvas();
+    }
+
+    function renderInspector() {
+      const node = state.components.find(c => c.id === state.selectedId);
+      if (!node) {
+        selInfo.textContent = 'No selection';
+        propsGrid.innerHTML = '';
+        compNotes.value = '';
+        return;
+      }
+      selInfo.innerHTML = `
+        <div><strong>${node.type}</strong> · id=${node.id}</div>
+        <div class="note">x:${node.x}, y:${node.y}, w:${node.w}, h:${node.h}</div>
+      `;
+      // Properties
+      propsGrid.innerHTML = '';
+      const fields = [
+        { id:'propX', label:'X', value: node.x },
+        { id:'propY', label:'Y', value: node.y },
+        { id:'propW', label:'W', value: node.w },
+        { id:'propH', label:'H', value: node.h },
+      ];
+      fields.forEach(f => {
+        const wrap = document.createElement('div');
+        wrap.className = 'field';
+        wrap.innerHTML = `<label>${f.label}</label><input id="${f.id}" type="number" value="${f.value}">`;
+        propsGrid.appendChild(wrap);
+      });
+
+      // Type-driven content fields
+      const wrapT = document.createElement('div');
+      wrapT.className = 'field';
+      wrapT.style.gridColumn = '1 / -1';
+
+      if (['heading','text','button','card','container'].includes(node.type)) {
+        wrapT.innerHTML = `<label>Text</label><input id="propText" value="${escapeAttr(node.text || '')}" />`;
+      } else if (['input', 'textarea'].includes(node.type)) {
+        wrapT.innerHTML = `<label>Placeholder</label><input id="propPH" value="${escapeAttr(node.placeholder || '')}" />`;
+      } else {
+        wrapT.innerHTML = `<label>Label</label><input id="propText" value="${escapeAttr(node.text || '')}" />`;
+      }
+      propsGrid.appendChild(wrapT);
+
+      // Bind changes
+      $('#propX').addEventListener('input', (e) => { node.x = snap(parseInt(e.target.value||0)); renderCanvas(); });
+      $('#propY').addEventListener('input', (e) => { node.y = snap(parseInt(e.target.value||0)); renderCanvas(); });
+      $('#propW').addEventListener('input', (e) => { node.w = Math.max(40, snap(parseInt(e.target.value||0))); renderCanvas(); });
+      $('#propH').addEventListener('input', (e) => { node.h = Math.max(30, snap(parseInt(e.target.value||0))); renderCanvas(); });
+
+      const txt = $('#propText');
+      if (txt) txt.addEventListener('input', (e) => { node.text = e.target.value; renderCanvas(); });
+
+      const ph = $('#propPH');
+      if (ph) ph.addEventListener('input', (e) => { node.placeholder = e.target.value; renderCanvas(); });
+
+      compNotes.value = node.notes || '';
+    }
+
+    // =====================
+    // Dragging & Resizing
+    // =====================
+
+    let dragState = null;
+    function startDrag(el, e) {
+      if (e.button !== 0) return;
+      const id = el.dataset.id;
+      const node = state.components.find(c => c.id === id);
+      if (!node) return;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const initial = { x: node.x, y: node.y };
+      el.setPointerCapture(e.pointerId);
+      dragState = { id, startX, startY, initial };
+      el.addEventListener('pointermove', onDragMove);
+      el.addEventListener('pointerup', endDrag);
+    }
+    function onDragMove(e) {
+      if (!dragState) return;
+      const node = state.components.find(c => c.id === dragState.id);
+      if (!node) return;
+      const dx = e.clientX - dragState.startX;
+      const dy = e.clientY - dragState.startY;
+      node.x = snap(dragState.initial.x + dx);
+      node.y = snap(dragState.initial.y + dy);
+      renderCanvas();
+      renderInspector();
+    }
+    function endDrag(e) {
+      e.currentTarget.removeEventListener('pointermove', onDragMove);
+      e.currentTarget.removeEventListener('pointerup', endDrag);
+      dragState = null;
+    }
+
+    let resizeState = null;
+    function startResize(el, e) {
+      if (e.button !== 0) return;
+      const id = el.dataset.id;
+      const node = state.components.find(c => c.id === id);
+      if (!node) return;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const initial = { w: node.w, h: node.h };
+      el.setPointerCapture(e.pointerId);
+      resizeState = { id, startX, startY, initial };
+      el.addEventListener('pointermove', onResizeMove);
+      el.addEventListener('pointerup', endResize);
+    }
+    function onResizeMove(e) {
+      if (!resizeState) return;
+      const node = state.components.find(c => c.id === resizeState.id);
+      if (!node) return;
+      const dw = e.clientX - resizeState.startX;
+      const dh = e.clientY - resizeState.startY;
+      node.w = Math.max(40, snap(resizeState.initial.w + dw));
+      node.h = Math.max(30, snap(resizeState.initial.h + dh));
+      renderCanvas();
+      renderInspector();
+    }
+    function endResize(e) {
+      e.currentTarget.removeEventListener('pointermove', onResizeMove);
+      e.currentTarget.removeEventListener('pointerup', endResize);
+      resizeState = null;
+    }
+
+    // =====================
+    // Context / Goals
+    // =====================
+
+    function addContextItem(text, component, componentId = null) {
+      state.contextItems.unshift({ id: uid(), text, component, date: nowISO(), componentId });
+      renderContext();
+    }
+
+    $('#btnAddGoal').addEventListener('click', () => {
+      const txt = $('#goalInput').value.trim();
+      if (!txt) return;
+      state.goals.unshift({ id: uid(), text: txt, date: nowISO() });
+      $('#goalInput').value = '';
+      renderGoals();
+    });
+    $('#btnClearGoals').addEventListener('click', () => {
+      if (confirm('Clear all goals?')) {
+        state.goals = [];
+        renderGoals();
+      }
+    });
+
+    // Floating + popover
+    fab.addEventListener('click', () => {
+      popover.classList.toggle('open');
+      if (popover.classList.contains('open')) ctxText.focus();
+    });
+    function closePopover() {
+      popover.classList.remove('open');
+      ctxText.value = '';
+      ctxLabel.value = '';
+      ctxComponent.selectedIndex = 0;
+    }
+    $('#ctxCancel').addEventListener('click', closePopover);
+    $('#ctxPlace').addEventListener('click', () => {
+      const context = ctxText.value.trim();
+      const type = ctxComponent.value;
+      const label = ctxLabel.value.trim();
+      state.pendingAdd = { type, context, label };
+      showToast('Click on the canvas to place your component…');
+    });
+
+    // =====================
+    // Inspector events
+    // =====================
+
+    compNotes.addEventListener('input', (e) => {
+      const node = state.components.find(c => c.id === state.selectedId);
+      if (!node) return;
+      node.notes = e.target.value;
+    });
+
+    projectComments.addEventListener('input', (e) => {
+      state.projectComments = e.target.value;
+    });
+
+    $('#btnDeleteSelected').addEventListener('click', () => {
+      if (!state.selectedId) return;
+      state.components = state.components.filter(c => c.id !== state.selectedId);
+      state.selectedId = null;
+      renderAll();
+    });
+
+    $('#btnExportSelection').addEventListener('click', () => {
+      const node = state.components.find(c => c.id === state.selectedId);
+      if (!node) return alert('No selection');
+      const html = exportNodeToHTML(node);
+      copyToClipboard(html);
+      showToast('Selection HTML copied to clipboard');
+    });
+
+    // =====================
+    // Export / Import / Save
+    // =====================
+
+    function exportHTML() {
+      const html = buildExportHTML();
+      codePreview.value = html;
+      return html;
+    }
+    $('#btnExportHTML').addEventListener('click', () => {
+      const html = exportHTML();
+      download('wireframe.html', html);
+    });
+    $('#btnExportJSON').addEventListener('click', () => {
+      download('wireframe.json', serialize());
+    });
+    $('#fileImport').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => deserialize(reader.result);
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    $('#btnSave').addEventListener('click', () => {
+      localStorage.setItem('visual-ai-coding', serialize());
+      showToast('Saved to localStorage');
+    });
+    $('#btnLoad').addEventListener('click', () => {
+      const json = localStorage.getItem('visual-ai-coding');
+      if (!json) return alert('No saved project');
+      deserialize(json);
+      showToast('Loaded from localStorage');
+    });
+
+    // =====================
+    // Code preview
+    // =====================
+
+    function refreshCodePreview() {
+      codePreview.value = buildExportHTML();
+    }
+    $('#btnRefreshCode').addEventListener('click', refreshCodePreview);
+    $('#btnCopyCode').addEventListener('click', () => {
+      copyToClipboard(codePreview.value);
+      showToast('Code copied');
+    });
+
+    function buildExportHTML() {
+      const body = state.components
+        .map(c => exportNodeToHTML(c))
+        .join('\n');
+      return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Exported Wireframe</title>
+<style>
+  body { background:#0e0f13; color:#eaeef7; font:14px/1.4 system-ui; }
+  .node { position:absolute; border:1px dashed #7aa2ff66; color:#dfe7ff; border-radius:8px; padding:8px; }
+  .btn { display:inline-block; border:1px solid #ffffff33; padding:8px 12px; border-radius:8px; background:#ffffff0f; }
+  input, textarea { width:100%; padding:8px; border:1px dashed #ffffff33; border-radius:8px; background:#ffffff0a; color:#bfd0ff; }
+  .card { padding:8px; border:1px dashed #ffffff33; border-radius:8px; background:#ffffff08; }
+</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+    }
+
+    function exportNodeToHTML(c) {
+      const style = `left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px;`;
+      switch (c.type) {
+        case 'heading': return `<div class="node" style="${style}"><h2>${escapeHTML(c.text||'Heading')}</h2></div>`;
+        case 'text': return `<div class="node" style="${style}"><p>${escapeHTML(c.text||'Text')}</p></div>`;
+        case 'button': return `<div class="node" style="${style}"><div class="btn">${escapeHTML(c.text||'Button')}</div></div>`;
+        case 'input': return `<div class="node" style="${style}"><input placeholder="${escapeAttr(c.placeholder||'Input')}"></div>`;
+        case 'textarea': return `<div class="node" style="${style}"><textarea placeholder="${escapeAttr(c.placeholder||'Textarea')}"></textarea></div>`;
+        case 'image': return `<div class="node" style="${style}">[ Image ]</div>`;
+        case 'card': return `<div class="node card" style="${style}"><strong>Card</strong><div>${escapeHTML(c.text||'')}</div></div>`;
+        case 'container': return `<div class="node" style="${style}"><div class="card">${escapeHTML(c.text||'Container')}</div></div>`;
+        default: return `<div class="node" style="${style}">${escapeHTML(c.text||'')}</div>`;
+      }
+    }
+
+    // =====================
+    // AI Stub
+    // =====================
+
+    $('#btnAI').addEventListener('click', async () => {
+      // Stub: shows how you'd send canvas + context to an AI endpoint
+      // Replace with your own backend call. Example using fetch to a serverless function:
+      const payload = {
+        goals: state.goals,
+        context: state.contextItems,
+        components: state.components.map(({id,type,x,y,w,h,text,placeholder}) => ({id,type,x,y,w,h,text,placeholder}))
+      };
+      alert('AI stub\n\nSend this JSON to your AI endpoint:\n\n' + JSON.stringify(payload, null, 2));
+    });
+
+    // =====================
+    // Utils
+    // =====================
+
+    function escapeHTML(s='') {
+      return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+    function escapeAttr(s='') { return escapeHTML(s); }
+
+    function copyToClipboard(text) {
+      navigator.clipboard?.writeText(text).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy');
+        ta.remove();
+      });
+    }
+
+    function download(filename, content) {
+      const blob = new Blob([content], {type: 'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // =====================
+    // Hotkeys
+    // =====================
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        localStorage.setItem('visual-ai-coding', serialize());
+        showToast('Saved');
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const node = state.components.find(c => c.id === state.selectedId);
+        if (node) {
+          state.components = state.components.filter(c => c.id !== node.id);
+          state.selectedId = null;
+          renderAll();
+        }
+      }
+      if (state.selectedId) {
+        const node = state.components.find(c => c.id === state.selectedId);
+        if (!node) return;
+        let moved = false;
+        const step = GRID;
+        if (e.key === 'ArrowLeft') { node.x = snap(node.x - step); moved = true; }
+        if (e.key === 'ArrowRight') { node.x = snap(node.x + step); moved = true; }
+        if (e.key === 'ArrowUp') { node.y = snap(node.y - step); moved = true; }
+        if (e.key === 'ArrowDown') { node.y = snap(node.y + step); moved = true; }
+        if (moved) { e.preventDefault(); renderCanvas(); renderInspector(); }
+      }
+    });
+
+    // =====================
+    // Init
+    // =====================
+
+    function init() {
+      buildPalette();
+      buildComponentDropdown();
+      renderAll();
+    }
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "version": "v1",
+  "audit": [
+    {
+      "ticketId": "t_6s66w9tieyjmgsp3ibs",
+      "who": "tester",
+      "when": "2025-10-16T00:42:14.541Z",
+      "diffs": [
+        {
+          "op": "replace",
+          "path": "/colors/accent",
+          "value": "#34d399"
+        }
+      ],
+      "labels": [
+        "test"
+      ],
+      "sourceExtension": "@frameforge/ext-ui"
+    }
+  ]
+}

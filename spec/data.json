@@ -1,0 +1,13 @@
+{
+  "rag": {
+    "indices": [
+      {
+        "id": "docs_index",
+        "source": "s3://bucket/docs",
+        "embedding": "e5-large",
+        "chunk": "md:512/64"
+      }
+    ]
+  }
+}
+
