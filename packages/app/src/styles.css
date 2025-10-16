@@ -1,0 +1,88 @@
+:root{
+  --bg: #0f1115;
+  --panel: #161a22;
+  --border: #1f2430;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #60a5fa;
+  --accent-weak: #2d6db8;
+  --dock-w: 240px;
+  --taskbar-h: 36px;
+}
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji","Segoe UI Emoji"}
+.muted{color:var(--muted)}
+
+/* App Grid */
+.app-grid{display:grid;grid-template-columns:var(--dock-w) 1fr;grid-template-rows:1fr var(--taskbar-h);height:100vh;}
+.app-grid.no-dock{grid-template-columns:1fr}
+.dock{grid-column:1;grid-row:1;background:var(--panel);border-right:1px solid var(--border);padding:10px;overflow:auto}
+.surface{grid-column:2;grid-row:1;padding:16px;overflow:auto}
+.surface-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:14px}
+.surface-header .sep{color:var(--muted)}
+.bottom{grid-column:1 / span 2;grid-row:2;background:rgba(22,26,34,0.85);backdrop-filter: blur(4px);border-top:1px solid var(--border);padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:8px}
+
+.dock-header{font-weight:600;margin-bottom:8px}
+.dock-nav{display:flex;flex-direction:column;gap:6px}
+.dock-btn{background:transparent;color:var(--text);border:1px solid var(--border);padding:6px 8px;border-radius:6px;text-align:left;cursor:pointer}
+.dock-btn:hover{border-color:var(--accent)}
+.dock-btn.active{border-color:var(--accent);color:var(--accent)}
+
+.drawer{position:fixed;top:0;right:0;height:100%;width:360px;background:var(--panel);border-left:1px solid var(--border);padding:12px}
+.drawer-title{font-size:14px;font-weight:600;margin-bottom:6px}
+.drawer-body{font-size:13px}
+
+.widget{background:transparent;border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:10px}
+.widget-title{font-size:14px;font-weight:600;margin:0 0 6px 0}
+
+.badge-row{display:flex;gap:10px;font-size:12px}
+
+.debug{position:fixed;left:10px;bottom:38px;background:rgba(22,26,34,0.9);border:1px solid var(--border);padding:8px;border-radius:8px;font-size:11px;max-width:50vw}
+.debug pre{white-space:pre-wrap;margin:0}
+
+/* Modal */
+.modal{position:fixed;inset:0;display:grid;place-items:center;z-index:40}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.5)}
+.modal-content{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;min-width:320px;color:var(--text)}
+.shortcuts{font-size:13px;line-height:1.6;margin:8px 0 12px 0;padding-left:16px}
+.btn{border:1px solid var(--border);background:transparent;color:var(--text);padding:6px 10px;border-radius:6px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.ff-desktop{position:fixed;inset:0 0 var(--taskbar-h) var(--dock-w);background:
+  radial-gradient(1200px 800px at 10% 10%, rgba(60,100,180,0.12), transparent 60%),
+  radial-gradient(1000px 700px at 90% 30%, rgba(100,60,180,0.10), transparent 60%),
+  linear-gradient(180deg, rgba(15,17,21,0.92), rgba(15,17,21,0.97));
+  backdrop-filter: blur(2px)
+}
+.ff-desktop.no-dock{inset:0 0 var(--taskbar-h) 0}
+.ff-window{position:absolute;background:var(--panel);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.35);overflow:hidden;resize:both}
+.ff-window-titlebar{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);cursor:move;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.05))}
+.ff-window-title{font-size:13px;font-weight:600}
+.ff-window-actions button{border:1px solid var(--border);background:transparent;color:var(--text);padding:2px 8px;border-radius:8px;margin-left:6px;cursor:pointer;min-width:28px}
+.ff-window-actions button:hover{border-color:var(--accent)}
+.ff-window-content{padding:10px;min-width:160px;min-height:120px}
+.ff-window.active{box-shadow:0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(96,165,250,0.2) inset}
+.ff-window.active .ff-window-titlebar{background:linear-gradient(180deg, rgba(96,165,250,0.18), rgba(96,165,250,0.10)); border-bottom-color: rgba(96,165,250,0.35)}
+
+.ff-launcher{position:fixed;left:10px;bottom:2px;z-index:100}
+.ff-launcher .ff-launcher-grid{display:none;position:absolute;bottom:28px;left:0;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px;gap:8px;grid-template-columns:repeat(3, 120px)}
+.ff-launcher .ff-launcher-grid.open{display:grid}
+.ff-app-btn{border:1px solid var(--border);background:transparent;color:var(--text);padding:6px 8px;border-radius:8px;cursor:pointer;text-align:left}
+.ff-app-btn:hover{border-color:var(--accent)}
+
+.ff-tray{position:fixed;right:10px;bottom:2px;display:flex;gap:8px;z-index:100}
+.ff-tray-item{border:1px solid var(--border);background:transparent;color:var(--text);padding:4px 8px;border-radius:8px;cursor:pointer}
+.ff-tray-item:hover{border-color:var(--accent)}
+
+/* Clock */
+.ff-clock{font-variant-numeric: tabular-nums; color:var(--muted); padding:4px 8px; border:1px solid var(--border); border-radius:8px}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border:1px solid var(--border);border-radius:999px;font-size:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.dot.green{background:#22c55e}
+.dot.yellow{background:#eab308}
+.dot.red{background:#ef4444}

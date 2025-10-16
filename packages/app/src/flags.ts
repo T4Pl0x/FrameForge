@@ -8,5 +8,8 @@ export const FLAGS = {
   AGENT_PANEL:      Boolean(import.meta.env.VITE_FF_AGENT_PANEL ?? false),
   TOOL_HUB:         Boolean(import.meta.env.VITE_FF_TOOL_HUB ?? false),
   RAG:              Boolean(import.meta.env.VITE_FF_RAG ?? false),
+  OS_DESKTOP:       Boolean(import.meta.env.VITE_FF_OS_DESKTOP ?? false),
+  OS_WINDOWS:       Boolean(import.meta.env.VITE_FF_OS_WINDOWS ?? false),
+  OS_LAUNCHER:      Boolean(import.meta.env.VITE_FF_OS_LAUNCHER ?? false),
+  OS_TRAY:          Boolean(import.meta.env.VITE_FF_OS_TRAY ?? false),
 } as const;
-

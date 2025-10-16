@@ -9,3 +9,11 @@ This repository contains the FrameForge OS workspace shell, kernel, extension ho
 
 See `packages/kernel/README.md` for kernel usage and `scripts/` for utilities.
 
+Stabilize & Baseline (Phase 0)
+
+- Goal: Keep the current app stable while OS features land behind flags.
+- Branch/PR: `stabilize/os-transition`
+- Docs:
+  - `docs/OS-TRANSITION.md` – charter and acceptance
+  - `docs/FLAGS.md` – flag conventions and `.env.local` usage
+- Acceptance: with all flags OFF, the app remains unchanged; tests/validate pass.

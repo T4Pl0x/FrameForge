@@ -8,8 +8,11 @@ interface ImportMetaEnv {
   readonly VITE_FF_AGENT_PANEL?: string;
   readonly VITE_FF_TOOL_HUB?: string;
   readonly VITE_FF_RAG?: string;
+  readonly VITE_FF_OS_DESKTOP?: string;
+  readonly VITE_FF_OS_WINDOWS?: string;
+  readonly VITE_FF_OS_LAUNCHER?: string;
+  readonly VITE_FF_OS_TRAY?: string;
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
-

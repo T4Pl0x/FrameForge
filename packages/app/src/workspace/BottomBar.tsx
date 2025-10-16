@@ -1,8 +1,13 @@
+import { FLAGS } from "../flags";
+import { Launcher } from "../os/Launcher";
+import { Tray } from "../os/Tray";
+
 export function BottomBar() {
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t bg-background px-3 py-1 text-xs">
-      Bottom Bar • status & prompts
-    </div>
+    <footer className="bottom">
+      <span className="muted">Bottom Bar • status & prompts</span>
+      {FLAGS.OS_LAUNCHER && <Launcher />}
+      {FLAGS.OS_TRAY && <Tray />}
+    </footer>
   );
 }
-

@@ -1,9 +1,24 @@
-export function Dock() {
+export function Dock({ active, onNavigate }: { active?: string; onNavigate?: (path: string) => void }) {
+  const items = [
+    { id: 'publish', label: 'Publish', path: '/publish' },
+    { id: 'agents', label: 'Agents', path: '/agents' },
+    { id: 'tools', label: 'Tools', path: '/tools' },
+    { id: 'settings', label: 'Settings', path: '/settings' },
+  ];
   return (
-    <div className="flex gap-2 p-2 border-b">
-      <span className="font-medium">FrameForge</span>
-      <span className="text-xs opacity-70">/ Dock</span>
-    </div>
+    <aside className="dock" aria-label="Dock Navigation">
+      <div className="dock-header">FrameForge</div>
+      <nav className="dock-nav" role="navigation">
+        {items.map(it => (
+          <button key={it.id}
+                  className={"dock-btn" + (active === it.path ? " active" : "")}
+                  onClick={() => onNavigate?.(it.path)}
+                  aria-current={active === it.path ? 'page' : undefined}
+                  title={it.label}>
+            {it.label}
+          </button>
+        ))}
+      </nav>
+    </aside>
   );
 }
-
