@@ -86,3 +86,9 @@ body{margin:0;background:var(--bg);color:var(--text);font-family: ui-sans-serif,
 .dot.green{background:#22c55e}
 .dot.yellow{background:#eab308}
 .dot.red{background:#ef4444}
+
+/* Gate badges */
+.badge.state-passing{background:#143d2a;color:#3ddc97;border-radius:999px;padding:2px 6px;margin-right:6px;border:1px solid rgba(61,220,151,0.2)}
+.badge.state-warning{background:#3a3212;color:#ffd166;border-radius:999px;padding:2px 6px;margin-right:6px;border:1px solid rgba(255,209,102,0.2)}
+.badge.state-failing{background:#402026;color:#ff6b6b;border-radius:999px;padding:2px 6px;margin-right:6px;border:1px solid rgba(255,107,107,0.2)}
+.badge.state-unknown{background:#23262d;color:#9aa4b2;border-radius:999px;padding:2px 6px;margin-right:6px;border:1px solid rgba(154,164,178,0.2)}

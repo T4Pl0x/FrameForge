@@ -8,7 +8,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@shared': path.resolve(__dirname, '../shared/src')
+      '@shared': path.resolve(__dirname, '../shared/src'),
+      '@kernel': path.resolve(__dirname, '../kernel/src')
     }
   },
   server: {
@@ -63,6 +64,7 @@ export default defineConfig({
             }
             const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
             const patches = Array.isArray(artifact.patches) ? artifact.patches : [];
+            if (patches.length > 20) { res.statusCode = 400; res.end(JSON.stringify({ error: 'too many patches' })); return; }
 
             // Ensure registry exists
             const registryPath = path.resolve(root, 'tools/registry.json');
