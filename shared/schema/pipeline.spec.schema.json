@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://frameforge.local/schema/pipeline.spec.schema.json",
+  "title": "PipelineSpec",
+  "type": "object",
+  "required": ["version","appId","extensions"],
+  "properties": {
+    "version": { "const": "v1" },
+    "appId": { "type": "string", "minLength": 1 },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name","entry","widgets"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "entry": { "type": "string", "minLength": 1 },
+          "widgets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id","kind"],
+              "properties": {
+                "id": { "type": "string" },
+                "kind": { "enum": ["panel","overlay","tool"] },
+                "source": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+

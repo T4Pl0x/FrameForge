@@ -7,6 +7,7 @@
     "packages/*"
   ],
   "scripts": {
+    "ff:codegen": "node packages/shared/codegen/ff-codegen.mjs",
     "dev": "pnpm --filter @frameforge/app dev",
     "build": "pnpm --filter @frameforge/app build",
     "preview": "pnpm --filter @frameforge/app preview",

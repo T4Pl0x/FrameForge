@@ -26,6 +26,12 @@ OS Flags (behind stable default-off)
 - `VITE_FF_OS_LAUNCHER` – show Start launcher (bottom-left).
 - `VITE_FF_OS_TRAY` – show system tray (bottom-right) + clock.
 
+Apps
+
+- `VITE_FF_PROMPT_LAB` – enable Prompt Lab (EPG) in the Start launcher.
+- `VITE_FF_BUILDER` – enable No‑Code Builder (Pipeline Spec) in the Start launcher.
+- `VITE_FF_CODEGEN` – enable codegen dev loading (auto‑mount generated web extensions in dev).
+
 Example `.env.local`
 
 ```
@@ -51,4 +57,3 @@ Notes
 - With all flags OFF (default), behavior is unchanged and no new UI appears.
 - Flag values are read at build time by Vite via `import.meta.env`.
 - See `packages/app/.env.example` for canonical examples.
-

@@ -12,6 +12,10 @@ interface ImportMetaEnv {
   readonly VITE_FF_OS_WINDOWS?: string;
   readonly VITE_FF_OS_LAUNCHER?: string;
   readonly VITE_FF_OS_TRAY?: string;
+  readonly VITE_FF_OS_NOTIFS?: string;
+  readonly VITE_FF_PROMPT_LAB?: string;
+  readonly VITE_FF_BUILDER?: string;
+  readonly VITE_FF_CODEGEN?: string;
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv;

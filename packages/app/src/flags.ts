@@ -12,4 +12,8 @@ export const FLAGS = {
   OS_WINDOWS:       Boolean(import.meta.env.VITE_FF_OS_WINDOWS ?? false),
   OS_LAUNCHER:      Boolean(import.meta.env.VITE_FF_OS_LAUNCHER ?? false),
   OS_TRAY:          Boolean(import.meta.env.VITE_FF_OS_TRAY ?? false),
+  OS_NOTIFS:        Boolean(import.meta.env.VITE_FF_OS_NOTIFS ?? false),
+  PROMPT_LAB:       Boolean(import.meta.env.VITE_FF_PROMPT_LAB ?? false),
+  BUILDER:          Boolean(import.meta.env.VITE_FF_BUILDER ?? false),
+  CODEGEN:          Boolean(import.meta.env.VITE_FF_CODEGEN ?? false),
 } as const;

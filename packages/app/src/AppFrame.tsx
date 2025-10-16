@@ -12,8 +12,12 @@ import { RagPanel } from "./rag/RagPanel";
 import { installHotkeys } from "./hotkeys";
 import { Breadcrumb } from "./ui/Breadcrumb";
 import { ShortcutsModal } from "./ui/ShortcutsModal";
-import { Desktop } from "./os/Desktop";
-import { WM, setDockOffset } from "./os/windowing";
+import { Desktop, WM, setDockOffset, Notifs } from "@frameforge/os";
+import { osDevBoot } from "./os/bootstrap";
+import { Toaster } from "./os/Toaster";
+import { Composer as PromptComposer } from "./prompt-lab/Composer";
+import { getWindowNode } from "./os/extHost";
+import { Builder } from "./builder/Builder";
 import { ApprovalsCard } from "./approvals/ApprovalsCard";
 
 function useQueryFlag(name: string){
@@ -55,6 +59,12 @@ export default function AppFrame() {
     return uninstall;
   }, []);
 
+  useEffect(() => {
+    if ((FLAGS.OS_DESKTOP || FLAGS.OS_WINDOWS) && FLAGS.OS_NOTIFS) {
+      osDevBoot();
+    }
+  }, []);
+
   const showDock = FLAGS.WORKSPACE_SHELL && !(FLAGS.OS_DESKTOP || FLAGS.OS_WINDOWS || FLAGS.OS_LAUNCHER);
 
   useEffect(() => { setDockOffset(showDock ? 240 : 0); }, [showDock]);
@@ -64,7 +74,20 @@ export default function AppFrame() {
       {showDock && <Dock active={route} onNavigate={setRoute} />}
 
       {(FLAGS.OS_DESKTOP || FLAGS.OS_WINDOWS) ? (
-        <Desktop noDock={!showDock} />
+        <Desktop noDock={!showDock} renderContent={(w)=>{
+          // Simple mapper for demo content; app integrates its own panels here
+          switch (w.app){
+            case 'agents': return <AgentPanel/>;
+            case 'tools': return <ToolHub/>;
+            case 'settings': return <div className="muted">Settings (control center stub)</div>;
+            case 'processes': return <div className="muted">Processes (runs list stub)</div>;
+            case 'logs': return <div className="muted">Kernel Logs (debug stub)</div>;
+            case 'approvals': return <div className="widget"><ApprovalsCard/></div>;
+            case 'prompt-lab': return <PromptComposer/>;
+            case 'builder': return <Builder/>;
+            default: return getWindowNode(w.id) || <div className="muted">{w.title}</div>;
+          }
+        }} />
       ) : (
       <Surface>
         <Breadcrumb path={route} />
@@ -109,6 +132,7 @@ export default function AppFrame() {
       {/* Approvals now shown as a widget card; drawer intentionally not rendered */}
 
       <DebugOverlay flags={FLAGS} route={route} />
+      {FLAGS.OS_NOTIFS && <Toaster />}
       <ShortcutsModal open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
   );

@@ -1,0 +1,8 @@
+{
+  "name": "@frameforge/ext-todo",
+  "version": "0.1.0",
+  "entry": { "module": "src/entry.tsx" },
+  "capabilities": ["windowApp"],
+  "permissions": { "read": [], "propose": [] }
+}
+
