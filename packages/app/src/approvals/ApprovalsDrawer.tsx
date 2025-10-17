@@ -1,5 +1,6 @@
 import React from "react";
 import { useProposals } from "./useProposals";
+import { apply } from "@frameforge/kernel/host/apply";
 
 export function ApprovalsDrawer() {
   const [refresh, setRefresh] = React.useState(0);
@@ -64,17 +65,46 @@ export function ApprovalsDrawer() {
   }
 
   async function onApply(ticketId: string) {
-    if (dryRun) return applyDryRun(ticketId);
-    setMsg("Applying…");
+    setMsg(dryRun ? "Computing dry-run…" : "Applying…");
     try {
-      const res = await fetch('/__ff/apply', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ticketId })
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.ok) throw new Error(json?.error || 'apply failed');
-      setMsg(`Applied ${ticketId}: ${json.changes} patch(es). Backup: ${json.backup}`);
+      // Load proposal data
+      const base = (import.meta as any).env?.VITE_REPO_ROOT as string | undefined;
+      if (!base) throw new Error('VITE_REPO_ROOT not set');
+      const art: any = await import(`/@fs/${base}/frameforge/reports/proposals/${ticketId}.json?${Date.now()}`);
+      const data = (art?.default || art) as any;
+      const patches = Array.isArray(data.patches) ? data.patches : [];
+
+      if (patches.length === 0) {
+        setMsg(`No patches found in ${ticketId}`);
+        return;
+      }
+
+      // Use kernel.apply for both dry-run and real apply in production
+      // Fall back to dev endpoint only in dev mode
+      if (import.meta.env.DEV && !dryRun) {
+        // Dev mode real apply - use legacy endpoint
+        const res = await fetch('/__ff/apply', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ticketId })
+        });
+        const json = await res.json();
+        if (!res.ok || !json?.ok) throw new Error(json?.error || 'apply failed');
+        setMsg(`Applied ${ticketId} (dev): ${json.changes} patch(es). Backup: ${json.backup}`);
+      } else {
+        // Production mode or dry-run - use kernel.apply
+        const result = await apply(patches, {
+          dryRun,
+          trace_id: ticketId
+        });
+
+        if (dryRun) {
+          setMsg(`Dry-run ${ticketId}: would apply ${patches.length} patch(es) with result:\n${JSON.stringify(result.nextJson, null, 2)}`);
+        } else {
+          setMsg(`Applied ${ticketId}: ${patches.length} patch(es). Backup: ${result.backup}`);
+        }
+      }
+
       setRefresh(x => x + 1);
     } catch (e: any) {
       setMsg(`Apply failed: ${e?.message || e}`);

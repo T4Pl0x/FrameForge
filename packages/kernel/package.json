@@ -4,7 +4,7 @@
   "type": "module",
   "main": "src/index.mjs",
   "exports": {
-    ".": "./src/index.mjs"
+    ".": "./src/index.mjs",
+    "./host/apply": "./src/host/apply.ts"
   }
 }
-

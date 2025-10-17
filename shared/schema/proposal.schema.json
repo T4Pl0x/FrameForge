@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://frameforge.local/schema/proposal.schema.json",
+  "title": "Proposal",
+  "description": "Schema for proposal artifacts that define RFC6902 patches to apply",
+  "type": "object",
+  "required": ["ticketId", "createdAt", "patches"],
+  "properties": {
+    "ticketId": {
+      "type": "string",
+      "description": "Unique identifier for the proposal",
+      "minLength": 1
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when proposal was created",
+      "format": "date-time"
+    },
+    "appliedAt": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when proposal was applied (optional)",
+      "format": "date-time"
+    },
+    "patches": {
+      "type": "array",
+      "description": "RFC6902 JSON Patch operations",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["op", "path"],
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": ["add", "remove", "replace"],
+            "description": "Patch operation type"
+          },
+          "path": {
+            "type": "string",
+            "description": "JSON Pointer path (must start with /)",
+            "pattern": "^/",
+            "oneOf": [
+              {"pattern": "^/tools/registry\\.json"},
+              {"pattern": "^/tools/registry\\.json/.*"}
+            ]
+          },
+          "value": {
+            "description": "Value to add or replace (required for add/replace)"
+          },
+          "from": {
+            "type": "string",
+            "description": "Source path for move/copy operations"
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": { "properties": { "op": { "enum": ["add", "replace"] } } },
+            "then": { "required": ["value"] }
+          }
+        ]
+      }
+    },
+    "pathWhitelist": {
+      "type": "array",
+      "description": "Allowed file paths for patches (only tools/registry.json currently)",
+      "default": ["tools/registry.json"],
+      "items": {
+        "type": "string",
+        "enum": ["tools/registry.json"]
+      }
+    }
+  },
+  "additionalProperties": true
+}
