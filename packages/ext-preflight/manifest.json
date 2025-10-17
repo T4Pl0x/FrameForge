@@ -1,0 +1,6 @@
+{
+  "name": "@frameforge/ext-preflight",
+  "version": "0.0.1",
+  "entry": "src/entry.ts",
+  "capabilities": ["preflight.emitNormalized"]
+}

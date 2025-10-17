@@ -17,8 +17,30 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    middlewareMode: false,
     configureServer(server) {
+      server.middlewares.use('/__ff/write-report', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end('POST only'); return; }
+        let body = '';
+        req.on('data', (c) => { body += c; });
+        req.on('end', () => {
+          try {
+            const { files } = JSON.parse(body || '{}');
+            if (!Array.isArray(files) || files.length > 20) throw new Error('invalid');
+            const allowed = (p: string) => p.startsWith('/.echo/') || p.startsWith('/frameforge/reports/');
+            const fs = require('node:fs'), path = require('node:path');
+            for (const f of files) {
+              if (!allowed(f.path)) throw new Error('path not allowed');
+              const abs = path.join(process.cwd(), f.path.replace(/^\//, ''));
+              fs.mkdirSync(path.dirname(abs), { recursive: true });
+              fs.writeFileSync(abs, JSON.stringify(f.json, null, 2));
+            }
+            res.statusCode = 200; res.end(JSON.stringify({ ok: true }));
+          } catch (e) {
+            res.statusCode = 400; res.end(JSON.stringify({ ok: false, error: e.message }));
+          }
+        });
+      });
+
       server.middlewares.use('/__ff/propose', (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end('POST only'); return; }
         let buf = '';
