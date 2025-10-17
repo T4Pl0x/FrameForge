@@ -1294,6 +1294,12 @@ input:checked + .slider:before {
   border: 1px solid #fff;
   border-radius: 0;
   cursor: nw-resize;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.frame:hover .resize-handle {
+  opacity: 1;
 }
 
 .component-menu {

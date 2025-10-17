@@ -9,6 +9,7 @@ import ToolsOverlay from '../components/ToolsOverlay.jsx';
 import CompilerView from './CompilerView.jsx';
 import SandboxView from './SandboxView.jsx';
 import PublishView from './PublishView.jsx';
+import PromptLabView from './PromptLabView.jsx';
 import GatesBadges from '../components/GatesBadges.jsx';
 import PrStatusPill from '../components/PrStatusPill.jsx';
 import { startGatesTap, subscribeGates, getGatesInfo } from '../state/gates.js';
@@ -18,6 +19,7 @@ function Dock({ active, onSelect }) {
   useEffect(() => { startGatesTap(); const off = subscribeGates(setSt); return () => off?.(); }, []);
   const items = [
     { key: 'ui', label: 'UI' },
+    { key: 'promptlab', label: 'Prompt Lab' },
     { key: 'compiler', label: 'Compiler' },
     { key: 'sandbox', label: 'Sandbox' },
     { key: 'publish', label: 'Publish' },
@@ -84,7 +86,7 @@ export default function Shell() {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && ['1','2','3','4'].includes(e.key)) {
         const idx = Number(e.key) - 1;
-        setActive(['ui','compiler','sandbox','publish'][idx] || 'ui');
+        setActive(['ui','promptlab','compiler','sandbox','publish'][idx] || 'ui');
       }
       if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'p')) window.dispatchEvent(new CustomEvent('ff:proposals:toggle'));
       if (e.altKey && (e.key.toLowerCase() === 'j')) window.dispatchEvent(new CustomEvent('ff:agents:toggle'));
@@ -101,6 +103,7 @@ export default function Shell() {
       <Dock active={active} onSelect={setActive} />
       <div style={{ position: 'relative', overflow: 'hidden' }}>
         {active === 'ui' && <App />}
+        {active === 'promptlab' && <PromptLabView />}
         {active === 'compiler' && <CompilerView />}
         {active === 'sandbox' && <SandboxView />}
         {active === 'publish' && <PublishView />}
