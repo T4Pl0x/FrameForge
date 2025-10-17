@@ -1,12 +1,9 @@
 {
-  "name": "@frameforge/ext-ui",
+  "name": "ext-ui",
   "version": "1.0.0",
-  "capabilities": ["componentPalette","inspectorPanels","canvasTools","tutorials","proposeSpecDiff"],
-  "permissions": {
-    "read": ["spec:ui","spec:data","spec:theme","ui:selection"],
-    "propose": ["spec:ui","spec:theme"]
+  "entry": {
+    "module": "./dist/entry.js"
   },
-  "entry": { "worker": "dist/worker.js" },
-  "compat": { "hostApi": "^1.0.0" }
+  "capabilities": ["read", "write"],
+  "permissions": ["spec:read", "spec:write", "proposals:create"]
 }
-
