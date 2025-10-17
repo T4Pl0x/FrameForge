@@ -1,0 +1,10 @@
+{
+  "name": "@frameforge/ext-mermaid",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/entry.js",
+  "module": "dist/entry.js",
+  "types": "dist/entry.d.ts",
+  "scripts": { "build": "tsc -p tsconfig.json" }
+}

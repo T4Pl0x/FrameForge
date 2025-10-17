@@ -1,0 +1,7 @@
+{
+  "name": "@frameforge/ext-mermaid",
+  "version": "0.0.1",
+  "entry": "src/entry.tsx",
+  "capabilities": ["visualization.mermaid"],
+  "permissions": ["propose.diff", "read.spec"]
+}
