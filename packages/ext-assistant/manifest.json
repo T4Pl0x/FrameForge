@@ -1,0 +1,7 @@
+{
+  "name": "@frameforge/ext-assistant",
+  "version": "0.0.1",
+  "entry": "src/entry.tsx",
+  "capabilities": ["assistant.suggest"],
+  "permissions": ["propose.diff", "read.spec"]
+}
