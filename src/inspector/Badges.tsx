@@ -29,14 +29,14 @@ export function ContrastBadge({ selection, fgColor }: { selection: { targetId: s
     return () => { cancelled = true; };
   }, [selection.targetId, selection.area.x, selection.area.y, selection.area.width, selection.area.height, fgColor]);
 
-  if (error) return <span className="badge" title={error}>Contrast — …</span>;
-  if (ratio == null) return <span className="badge">Contrast — …</span>;
+  if (error) return <span className="badge" title={error}>Contrast error</span>;
+  if (ratio == null) return <span className="badge">Contrast …</span>;
   const worst = minRatio ?? ratio;
   const pass = worst >= 4.5; // adjust for large text scenario separately
   const label = `${worst.toFixed(1)}:1`;
   return (
     <div className="badge" title={`Computed vs sampled bg; worst-case ${label}`}>
-      Contrast {label} {pass ? '✅' : '⚠'}
+      Contrast {label} {pass ? 'OK' : 'Fail'}
     </div>
   );
 }

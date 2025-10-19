@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ContrastBadge } from '../inspector/ContrastBadge';
+﻿import React, { , useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Components } from '../componentRegistry/index.js';
-import { resolveFgColor, isLargeTextFromProps, isIconOnlyFromProps } from '../inspector/detectDisplayProps';
+import ComponentMenu from './ComponentMenu.jsx';\nimport { FrameHeader, FrameInspector } from './frame';
 
 /**
  * Frame component - renders individual frames with their components
@@ -36,11 +35,7 @@ const Frame = ({
   uiHintsEnabled = true,
   onAskCopilot,
 }) => {
-  const [commentDrafts, setCommentDrafts] = useState({});
-  const [isCustomTitle, setIsCustomTitle] = useState(false);
-  const [customTitleValue, setCustomTitleValue] = useState('');
-  const customTitleInputRef = useRef(null);
-  const [showInspector, setShowInspector] = useState(false);
+          const [showInspector, setShowInspector] = useState(false);
 
   const fallbackTitle = frame.title || 'Untitled Frame';
 
@@ -60,6 +55,14 @@ const Frame = ({
 
   const isModal = frame.kind === 'modal';
   const isMinimized = Boolean(frame.minimized);
+  const selection = useMemo(() => {
+    const node = (selectedNodeId && (frame.nodes || []).find(n => n.id === selectedNodeId)) || null;
+    const area = node && (node?.props?.width && node?.props?.height)
+      ? { x: Math.max(0, (frame.x + (node.props.x || 0))), y: Math.max(0, (frame.y + (node.props.y || 0))), width: Math.max(1, node.props.width), height: Math.max(1, node.props.height) }
+      : { x: Math.max(0, frame.x), y: Math.max(0, frame.y), width: Math.max(1, frame.width), height: Math.max(1, frame.height) };
+    return { targetId: node?.id || frame.id, area };
+  }, [selectedNodeId, frame.x, frame.y, frame.width, frame.height, frame.nodes]);
+
 
   const frameStyle = {
     position: 'absolute',
@@ -76,18 +79,7 @@ const Frame = ({
     zIndex: isModal ? 20 : 1,
   };
 
-  const renderComponentMenu = (menuKey, node) => {
-    const comments = getComponentComments(frame.id, node.id);
-    const commentDraft = commentDrafts[menuKey] || '';
-    const componentData = getComponent(frame.id, node.id) || node;
-
-    const handleCommentChange = (event) => {
-      const { value } = event.target;
-      setCommentDrafts((prev) => ({
-        ...prev,
-        [menuKey]: value,
-      }));
-    };
+  
 
     const handleAddComment = () => {
       if (!commentDraft.trim()) return;
@@ -112,7 +104,7 @@ const Frame = ({
                 isIconOnly={false}
               />
             </div>
-            ×
+            Ã—
           </button>
         </div>
         <div className="component-menu__meta">
@@ -279,39 +271,14 @@ const Frame = ({
       style={frameStyle}
       onMouseDown={(event) => onFrameMouseDown(event, frame.id, frame)}
     >
-      {/* Frame Header */}
-      <div className="frame-header">
-        <div className="frame-header-left">
-          <select
-            className="frame-title-select"
-            value={selectValue}
-            onChange={handleTitleChange}
-            onMouseDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
-          >
-            {normalizedTitleOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-            <option value="__custom">+ Custom title…</option>
-          </select>
-          {isCustomTitle && (
-            <input
-              ref={customTitleInputRef}
-              className="frame-title-input"
-              value={customTitleValue}
-              onChange={(event) => setCustomTitleValue(event.target.value)}
-              onBlur={commitCustomTitle}
-              onKeyDown={handleCustomInputKeyDown}
-              onMouseDown={(event) => event.stopPropagation()}
-              placeholder="Name this frame"
-            />
-          )}
-          <span className="frame-id-pill">#{frame.id.slice(0, 4)}</span>
-          {isModal && <span className="frame-badge frame-badge--modal">Modal</span>}
-          {frame.changeFlags && <span className="frame-badge frame-badge--changed">Δ Changed</span>}
-        </div>
+      <FrameHeader
+        frameId={frame.id}
+        title={frame.title || 'Untitled Frame'}
+        isLocked={!!frame.locked}
+        onRename={(next) => { onAddFrameTitleOption(next); onSelectFrameTitle(frame.id, next); }}
+        onDelete={() => onDeleteFrame(frame.id)}
+        onToggleLock={(locked) => onUpdateFrame && onUpdateFrame(frame.id, { locked })}
+      />
         <div className="frame-header-actions">
           <button
             type="button"
@@ -329,7 +296,7 @@ const Frame = ({
             title={uiHintsEnabled ? 'Delete frame' : undefined}
             aria-label={uiHintsEnabled ? 'Delete frame' : undefined}
           >
-            🗑
+            ðŸ—‘
           </button>
           <button
             type="button"
@@ -391,7 +358,7 @@ const Frame = ({
           };
 
           const nav = node?.props?.navigateTo;
-          const navBadge = nav ? (nav.type === 'modal' ? `⟂ ${nav.label || 'Modal'}` : `↪ ${nav.label || 'Screen'}`) : null;
+          const navBadge = nav ? (nav.type === 'modal' ? `âŸ‚ ${nav.label || '—'}` : `â†ª ${nav.label || '—'}`) : null;
 
           return (
             <div key={node.id} className="frame-node">
@@ -405,7 +372,7 @@ const Frame = ({
                 title={uiHintsEnabled ? 'Delete component' : undefined}
                 aria-label={uiHintsEnabled ? 'Delete component' : undefined}
               >
-                🗑
+                ðŸ—‘
               </button>
               <div
                 onMouseDown={(event) => onComponentMouseDown(event, frame.id, node.id, frame, node)}
@@ -430,7 +397,23 @@ const Frame = ({
                   <span className="component-link-badge" aria-label={uiHintsEnabled ? 'Navigation link' : undefined} title={uiHintsEnabled ? navBadge : undefined}>{navBadge}</span>
                 )}
               </div>
-              {menuState?.isOpen && renderComponentMenu(menuKey, node)}
+              {menuState?.isOpen && (
+                <ComponentMenu
+                  rootEl={rootEl}
+                  frame={frame}
+                  node={node}
+                  uiHintsEnabled={uiHintsEnabled}
+                  onAskCopilot={onAskCopilot}
+                  screens={screens}
+                  onCreateScreen={onCreateScreen}
+                  onCreateModalFrame={onCreateModalFrame}
+                  getComponent={getComponent}
+                  getComponentComments={getComponentComments}
+                  addComponentComment={addComponentComment}
+                  onUpdateNode={onUpdateNode}
+                  closeComponentMenu={closeComponentMenu}
+                />
+              )}
             </div>
           );
         })}
@@ -441,23 +424,13 @@ const Frame = ({
         onMouseDown={(event) => onResizeMouseDown(event, frame.id, frame)}
       />
       {showInspector && (
-        <div className="frame-inspector" onMouseDown={(e) => e.stopPropagation()}>
-          <div className="frame-inspector__header">
-            <strong>Frame Inspector</strong>
-            <button className="frame-inspector__close" onClick={() => setShowInspector(false)} aria-label="Close">×</button>
-          </div>
-          <div className="frame-inspector__body">
-            <div><strong>Title:</strong> {fallbackTitle}</div>
-            <div><strong>Screen:</strong> {frame.screenId}</div>
-            <div><strong>Pos:</strong> {frame.x},{frame.y} <strong>Size:</strong> {frame.width}×{frame.height}</div>
-            {isModal && (
-              <div>
-                <strong>Modal:</strong> {isMinimized ? 'minimized' : 'open'}
-                {onUpdateFrame && (
-                  <button className="panel-icon-button" style={{ marginLeft: 8 }} onClick={() => onUpdateFrame(frame.id, { minimized: !isMinimized })}>
-                    {isMinimized ? 'Restore' : 'Minimize'}
-                  </button>
-                )}
+        <FrameInspector
+          frameId={frame.id}
+          selection={selection}
+          onChange={(patch) => onUpdateFrame && onUpdateFrame(frame.id, patch)}
+          onClose={() => setShowInspector(false)}
+        />
+      )}
               </div>
             )}
             {frame.changeFlags && (
@@ -468,9 +441,9 @@ const Frame = ({
             {(() => {
               const node = (selectedNodeId && frame.nodes.find(n => n.id === selectedNodeId)) || null;
               const cp = node ? { type: node.type || '', props: node.props || {}, themeTokens: undefined } : { type: 'FrameTitle', props: {}, themeTokens: undefined };
-              const fgHex = resolveFgColor(cp) || '#111111';
-              const large = isLargeTextFromProps(cp);
-              const iconOnly = isIconOnlyFromProps(cp);
+              const fgHex = '#111111' || '#111111';
+              const large = false;
+              const iconOnly = false;
               const area = node && (node.props?.width && node.props?.height)
                 ? { x: Math.max(0, (frame.x + (node.props.x || 0))), y: Math.max(0, (frame.y + (node.props.y || 0))), width: Math.max(1, node.props.width), height: Math.max(1, node.props.height) }
                 : { x: Math.max(0, frame.x), y: Math.max(0, frame.y), width: Math.max(1, frame.width), height: Math.max(1, frame.height) };
@@ -490,9 +463,9 @@ const Frame = ({
               const outbound = (frame.nodes || [])
                 .map(n => n?.props?.navigateTo)
                 .filter(Boolean)
-                .map(n => `${n.type === 'modal' ? 'Modal' : 'Screen'}: ${n.label || n.targetId || ''}`);
+                .map(n => `${n.type === 'modal' ? 'Modal' : 'Screen'}: ${n.label || n.targetId || '—'}`);
               return outbound.length ? (
-                <div><strong>Outbound:</strong> {outbound.join(' • ')}</div>
+                <div><strong>Outbound:</strong> {outbound.join(' · ')}</div>
               ) : null;
             })()}
           </div>
@@ -532,3 +505,13 @@ Frame.propTypes = {
 };
 
 export default Frame;
+
+
+
+
+
+
+
+
+
+

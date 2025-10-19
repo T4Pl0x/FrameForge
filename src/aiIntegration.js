@@ -4,7 +4,7 @@
 export const AVAILABLE_MODELS = [
   {
     id: 'openrouter/anonymized-gpt-4o-mini',
-    name: 'OpenRouter · GPT-4o Mini (community)',
+    name: 'OpenRouter GPT-4o Mini (community)',
     provider: 'OpenRouter',
     contextLength: 128000,
     strengths: 'General-purpose, cost-effective default',
@@ -12,7 +12,7 @@ export const AVAILABLE_MODELS = [
   },
   {
     id: 'anthropic/claude-3-haiku',
-    name: 'Anthropic · Claude 3 Haiku',
+    name: 'Anthropic Claude 3 Haiku',
     provider: 'Anthropic',
     contextLength: 200000,
     strengths: 'Fast responses, creative tasks',
@@ -20,7 +20,7 @@ export const AVAILABLE_MODELS = [
   },
   {
     id: 'openai/gpt-4o',
-    name: 'OpenAI · GPT-4o',
+    name: 'OpenAI GPT-4o',
     provider: 'OpenAI',
     contextLength: 128000,
     strengths: 'Versatile, coding, design assistance',
@@ -28,7 +28,7 @@ export const AVAILABLE_MODELS = [
   },
   {
     id: 'meta-llama/llama-3.1-70b-instruct',
-    name: 'Meta · Llama 3.1 70B Instruct',
+    name: 'Meta Llama 3.1 70B Instruct',
     provider: 'Meta',
     contextLength: 131072,
     strengths: 'Large context, good for complex analysis',
@@ -113,7 +113,7 @@ Provide specific, actionable suggestions with code examples when relevant.`;
 
     if (context.selectedFrame) {
       prompt += `Current Frame Context:
-- Size: ${context.selectedFrame.width}×${context.selectedFrame.height}
+- Size: ${context.selectedFrame.width}x${context.selectedFrame.height}
 - Components: ${context.selectedFrame.nodes?.length || 0} elements
 - Current styling: ${JSON.stringify(context.selectedFrame, null, 2)}\n\n`;
     }
@@ -255,3 +255,4 @@ Requirements:
 
 // Export singleton instance
 export const aiIntegration = new AIIntegration();
+

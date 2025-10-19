@@ -9,10 +9,11 @@ export default function ToolsOverlay({ onClose }) {
     (async () => {
       const entries = registry.tools || [];
       const statuses = await Promise.all(entries.map(async (t) => {
+        const id = t.id || t.name;
         try {
-          const res = await toolCall(t.name || t.id, (t.permissions?.[0] || 'status'), {});
-          return { id: t.name || t.id, status: res.status || 'online' };
-        } catch { return { id: t.name || t.id, status: 'offline' }; }
+          const res = await toolCall(id, 'status', {});
+          return { id, status: res.status || 'online' };
+        } catch { return { id, status: 'offline' }; }
       }));
       if (mounted) setTools(statuses);
     })();

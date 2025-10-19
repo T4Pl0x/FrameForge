@@ -24,15 +24,17 @@ export function ContrastBadge({ rootEl, selection, fgColor, isLargeText, isIconO
       const bmp = await surface.getRenderBitmap(selection.area);
       if (!bmp || !fgColor) { if (!cancelled) { setValue(null); setWorst(null); } return; }
       const dpr = window.devicePixelRatio || 1;
-      const off = new OffscreenCanvas(Math.max(1, Math.floor(selection.area.width * dpr)), Math.max(1, Math.floor(selection.area.height * dpr)));
+      const w = Math.max(1, Math.floor(selection.area.width * dpr));
+      const h = Math.max(1, Math.floor(selection.area.height * dpr));
+      const off: any = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(w, h) : (() => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; })();
       const ctx = off.getContext('2d', { willReadFrequently: true })!;
-      ctx.drawImage(bmp, 0, 0);
+      ctx.drawImage(bmp as any, 0, 0);
       const steps = 5;
-      const dx = Math.max(1, Math.floor(off.width / steps));
-      const dy = Math.max(1, Math.floor(off.height / steps));
+      const dx = Math.max(1, Math.floor(w / steps));
+      const dy = Math.max(1, Math.floor(h / steps));
       let sumL = 0, cnt = 0, minL = 1, maxL = 0;
-      for (let y = dy >> 1; y < off.height; y += dy) {
-        for (let x = dx >> 1; x < off.width; x += dx) {
+      for (let y = dy >> 1; y < h; y += dy) {
+        for (let x = dx >> 1; x < w; x += dx) {
           const d = ctx.getImageData(x, y, 1, 1).data;
           const L = relLum(d[0] / 255, d[1] / 255, d[2] / 255);
           sumL += L; cnt++; if (L < minL) minL = L; if (L > maxL) maxL = L;
@@ -69,7 +71,7 @@ export function ContrastBadge({ rootEl, selection, fgColor, isLargeText, isIconO
   const target = isIconOnly ? 3.0 : (isLargeText ? 3.0 : 4.5);
   const worstVal = (worst ?? value)!;
   const pass = worstVal >= target;
-  const title = `WCAG AA target ${target}:1 • worst ${worstVal.toFixed(1)}:1`;
+  const title = `WCAG AA target ${target}:1 — worst ${worstVal.toFixed(1)}:1`;
 
   const fixWithAI = async () => {
     try {
@@ -89,7 +91,7 @@ export function ContrastBadge({ rootEl, selection, fgColor, isLargeText, isIconO
 
   return (
     <div className={`ff-badge ${pass ? 'ff-badge--ok' : 'ff-badge--warn'}`} title={title}>
-      Contrast {worstVal.toFixed(1)}:1 {pass ? '✅' : '⚠'}
+      Contrast {worstVal.toFixed(1)}:1 {pass ? 'OK' : 'Fail'}
       {!pass && (
         <button className="ff-link" style={{ marginLeft: 8 }} onClick={fixWithAI}>
           Fix with AI
@@ -98,3 +100,4 @@ export function ContrastBadge({ rootEl, selection, fgColor, isLargeText, isIconO
     </div>
   );
 }
+

@@ -1,7 +1,7 @@
 import registry from '../../tools/registry.json';
 
 const toolMap = new Map();
-for (const t of registry.tools) toolMap.set(t.name, t);
+for (const t of (registry.tools || [])) toolMap.set(t.id || t.name, t);
 
 const GH_API = 'https://api.github.com';
 
@@ -34,28 +34,40 @@ function createLimiter({ rpm = 60, burst = 10 } = {}) {
 
 const limiter = createLimiter({ rpm: 300, burst: 30 });
 
-async function limitedFetch(url, opts, { retries = 2, backoffMs = 800 } = {}) {
+async function limitedFetch(url, opts = {}, { retries = 2, backoffMs = 800, timeoutMs = 12000 } = {}) {
   await limiter.wait();
+  let last;
   for (let i = 0; i <= retries; i++) {
-    const res = await fetch(url, opts);
-    if (res.status === 429 || res.status === 403) {
-      await new Promise(r => setTimeout(r, backoffMs * (i + 1)));
-      continue;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...(opts || {}), signal: ctrl.signal });
+      clearTimeout(timer);
+      if (res.status === 429 || res.status === 403) {
+        await new Promise(r => setTimeout(r, backoffMs * (i + 1) + Math.floor(Math.random()*200)));
+        last = res; continue;
+      }
+      return res;
+    } catch (e) {
+      clearTimeout(timer);
+      last = e;
     }
-    return res;
   }
+  // final attempt without limiter timeout
   return fetch(url, opts);
 }
 
-export async function call(toolName, action, payload) {
-  const entry = toolMap.get(toolName);
-  if (!entry) throw new Error(`Unknown tool: ${toolName}`);
-  if (!entry.permissions.includes(action)) throw new Error(`Not permitted: ${toolName}.${action}`);
+export async function call(toolId, action, payload) {
+  const entry = toolMap.get(toolId);
+  if (!entry) throw new Error(`Unknown tool: ${toolId}`);
+  // Permissions: allow by default; if explicit array, enforce
+  const perms = entry.permissions;
+  if (Array.isArray(perms) && !perms.includes(action)) throw new Error(`Not permitted: ${toolId}.${action}`);
   // Placeholder: real MCP call would go here; return mocked status
-  if (toolName === 'rag_indexer' && action === 'status') {
-    return { ok: true, tool: toolName, action, status: 'green' };
+  if (toolId === 'rag_indexer' && action === 'status') {
+    return { ok: true, tool: toolId, action, status: 'green' };
   }
-  return { ok: true, tool: toolName, action, payload, status: 'mocked' };
+  return { ok: true, tool: toolId, action, payload, status: 'mocked' };
 }
 
 async function ghGET(path, token) {
