@@ -1,0 +1,90 @@
+name: Lint & Build
+
+on:
+  push:
+    branches: [ main, feat/*, stabilize/* ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  lint-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate extension manifests (strict)
+        run: |
+          echo "🔧 Validating extension manifests..."
+          node scripts/validate-manifests.mjs --strict
+
+      - name: Validate proposals (strict)
+        run: |
+          echo "📝 Validating proposals..."
+          node scripts/validate-proposals.mjs --strict
+
+      - name: Semgrep (block write-IO)
+        run: |
+          echo "🔍 Checking for unauthorized spec/ writes..."
+          # Install semgrep if needed
+          if ! command -v semgrep >/dev/null; then
+            pip install semgrep
+          fi
+          # Check for direct spec writes outside kernel.apply
+          semgrep --config .semgrep/write-io-guard.yml --error --strict
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Type check
+        run: pnpm run type-check
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Unit & smoke tests
+        run: pnpm -F @frameforge/app test -t "ext-.*smoke|gates|codegen"
+
+  nightly-slos:
+    runs-on: ubuntu-latest
+    # Only run on main branch pushes, not PRs
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+
+      - name: Emit ops heartbeat
+        run: |
+          node scripts/emit-heartbeat.mjs
+
+      - name: Audit rotation
+        run: |
+          chmod +x scripts/rotate-audit.sh
+          scripts/rotate-audit.sh

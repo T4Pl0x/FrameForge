@@ -1,0 +1,50 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "-e",
+        "GITHUB_TOOLSETS",
+        "-e",
+        "GITHUB_READ_ONLY",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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",
+        "GITHUB_TOOLSETS": "repositories,issues,pull_requests,actions",
+        "GITHUB_READ_ONLY": "true"
+      }
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "DEFAULT_MINIMUM_TOKENS": ""
+      }
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "https://github.com/PAINUS79/FrameForge"
+      ]
+    },
+    "sqlite": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-sqlite",
+        "--db-path",
+        "https://github.com/PAINUS79/FrameForge"
+      ]
+    }
+  }
+}

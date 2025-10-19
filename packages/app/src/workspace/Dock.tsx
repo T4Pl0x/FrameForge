@@ -1,9 +1,11 @@
 export function Dock({ active, onNavigate }: { active?: string; onNavigate?: (path: string) => void }) {
   const items = [
-    { id: 'publish', label: 'Publish', path: '/publish' },
-    { id: 'agents', label: 'Agents', path: '/agents' },
-    { id: 'tools', label: 'Tools', path: '/tools' },
-    { id: 'settings', label: 'Settings', path: '/settings' },
+    { id: 'publish', label: 'Publish', path: '/publish', icon: '📤' },
+    { id: 'agents', label: 'Agents', path: '/agents', icon: '🧠' },
+    { id: 'mermaid', label: 'Mermaid', path: '/app/mermaid', icon: '🜲' },
+    { id: 'assistant', label: 'Assistant', path: '/app/assistant', icon: '🤖' },
+    { id: 'tools', label: 'Tools', path: '/tools', icon: '🔧' },
+    { id: 'settings', label: 'Settings', path: '/settings', icon: '⚙️' },
   ];
   return (
     <aside className="dock" aria-label="Dock Navigation">
@@ -14,8 +16,10 @@ export function Dock({ active, onNavigate }: { active?: string; onNavigate?: (pa
                   className={"dock-btn" + (active === it.path ? " active" : "")}
                   onClick={() => onNavigate?.(it.path)}
                   aria-current={active === it.path ? 'page' : undefined}
-                  title={it.label}>
-            {it.label}
+                  aria-label={it.label}
+                  data-app={it.id}>
+            <span className="dock-icon">{it.icon}</span>
+            <span className="visually-hidden">{it.label}</span>
           </button>
         ))}
       </nav>

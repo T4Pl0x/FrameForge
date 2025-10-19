@@ -1,0 +1,140 @@
+{
+  "name": "Patch Pack C: Workflow/Agent Builder Extension",
+  "version": "1.0.0",
+  "description": "No-code, node-based workflow builder that compiles to runnable flows",
+  "slice": {
+    "name": "Slice 1: Foundation",
+    "description": "Core types, registration, minimal canvas, and basic nodes",
+    "maxLOC": 300,
+    "deliverables": [
+      "src/extensions/workflow/flowTypes.ts",
+      "src/extensions/workflow/index.ts (registration)",
+      "src/extensions/workflow/FlowCanvas.tsx (minimal skeleton)",
+      "src/extensions/workflow/nodes/TriggerNode.tsx",
+      "src/extensions/workflow/nodes/PromptLabNode.tsx (placeholder)",
+      "src/extensions/workflow/__tests__/workflow.test.ts"
+    ]
+  },
+  "adaptations": {
+    "paths": {
+      "note": "Using src/extensions/workflow/ as base path, adapting from user's specified structure"
+    },
+    "registries": {
+      "note": "Will use existing extension/view registries from Patch Pack A"
+    },
+    "uiCreator": {
+      "note": "Will reuse GridSnap and selection components from UI Creator (Patch Pack B)"
+    }
+  },
+  "requirements": {
+    "typescript": {
+      "strict": true,
+      "noAnyInExports": true
+    },
+    "testing": {
+      "framework": "vitest",
+      "coverage": {
+        "statements": ">= 70%",
+        "branches": ">= 60%"
+      }
+    },
+    "architecture": {
+      "proposalBased": true,
+      "dynamicRegistration": true,
+      "extensionSystem": true
+    },
+    "accessibility": {
+      "wcag": "2.1 AA",
+      "keyboardNavigation": true,
+      "screenReader": true
+    }
+  },
+  "implementation": {
+    "flowTypes": {
+      "interfaces": [
+        "Flow",
+        "Node", 
+        "NodeType",
+        "Edge"
+      ],
+      "nodeTypes": [
+        "Trigger",
+        "PromptLab", 
+        "UIAgent",
+        "Guardrail",
+        "Tool",
+        "Compiler",
+        "Sandbox",
+        "Publisher"
+      ]
+    },
+    "registration": {
+      "extension": "workflow",
+      "view": "workflow",
+      "commands": [
+        "Workflow: New",
+        "Workflow: Compile", 
+        "Workflow: Debug Trace"
+      ]
+    },
+    "canvas": {
+      "features": [
+        "drag to place nodes",
+        "click-drag edges",
+        "multi-select",
+        "grid snap",
+        "keyboard nudge",
+        "delete key support"
+      ],
+      "reusable": [
+        "GridSnap from UI Creator",
+        "selection management",
+        "keyboard handling"
+      ]
+    },
+    "nodes": {
+      "slice1": [
+        "TriggerNode (complete)",
+        "PromptLabNode (placeholder)"
+      ],
+      "slice2": [
+        "UIAgentNode",
+        "GuardrailNode", 
+        "ToolNode"
+      ],
+      "slice3": [
+        "CompilerNode",
+        "SandboxNode",
+        "PublisherNode"
+      ]
+    }
+  },
+  "validation": {
+    "refactor": {
+      "checks": [
+        "Guardrail before PromptLab/UIAgent",
+        "max fan-out ≤ 4",
+        "prompt length ≤ 1200 chars",
+        "tool count ≤ budget",
+        "cycle detection"
+      ]
+    },
+    "compile": {
+      "output": "/spec/logic/flow.json",
+      "schema": "runnable plan format",
+      "validation": "pre and post compile"
+    },
+    "debug": {
+      "execution": "single trace",
+      "mockData": "2-3 steps",
+      "logs": "inputs, outputs, timings, guardrail flags"
+    }
+  },
+  "integration": {
+    "promptLab": "existing Prompt Lab contract",
+    "uiCreator": "seed/patch proposal API",
+    "compiler": "existing CLI hook",
+    "sandbox": "normalized reports API",
+    "publisher": "PR creation workflow"
+  }
+}

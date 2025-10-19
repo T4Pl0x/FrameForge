@@ -6,7 +6,7 @@ export async function listIndices(){
       const mod: any = await import(`/@fs/${base}/spec/data.json`);
       const json = mod?.default || mod;
       const indices = json?.rag?.indices || [];
-      return indices.map((i: any) => ({ ...i, health: '🟢' }));
+      return indices.map((i: any) => ({ ...i, health: 'green' }));
     }
   } catch {}
   return [];
@@ -20,3 +20,4 @@ export async function search(q: string){
     { title: `Result for "${q}" #2` }
   ];
 }
+

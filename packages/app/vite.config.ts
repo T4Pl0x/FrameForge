@@ -5,6 +5,8 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 
+const DEV = process.env.NODE_ENV !== 'production';
+
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   resolve: {
@@ -18,27 +20,45 @@ export default defineConfig({
   server: {
     port: 5173,
     configureServer(server) {
-      server.middlewares.use('/__ff/write-report', (req, res) => {
-        if (req.method !== 'POST') { res.statusCode = 405; res.end('POST only'); return; }
-        let body = '';
-        req.on('data', (c) => { body += c; });
-        req.on('end', () => {
-          try {
-            const { files } = JSON.parse(body || '{}');
-            if (!Array.isArray(files) || files.length > 20) throw new Error('invalid');
-            const allowed = (p: string) => p.startsWith('/.echo/') || p.startsWith('/frameforge/reports/');
-            const fs = require('node:fs'), path = require('node:path');
-            for (const f of files) {
-              if (!allowed(f.path)) throw new Error('path not allowed');
-              const abs = path.join(process.cwd(), f.path.replace(/^\//, ''));
-              fs.mkdirSync(path.dirname(abs), { recursive: true });
-              fs.writeFileSync(abs, JSON.stringify(f.json, null, 2));
-            }
-            res.statusCode = 200; res.end(JSON.stringify({ ok: true }));
-          } catch (e) {
-            res.statusCode = 400; res.end(JSON.stringify({ ok: false, error: e.message }));
+      if (!DEV) return; // never expose in prod
+
+      server.middlewares.use('/__ff/write-report', async (req, res) => {
+        try {
+          if (req.method !== 'POST') {
+            res.statusCode = 405; res.end('Method Not Allowed'); return;
           }
-        });
+          let body = '';
+          req.on('data', (c) => (body += c));
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body || '{}');
+              const files = Array.isArray(parsed.files) ? parsed.files : [];
+              if (!files.length || files.length > 20) throw new Error('invalid');
+
+              const path = require('node:path');
+              const fs = require('node:fs');
+              const allow = (p: string) =>
+                p.startsWith('/.echo/') || p.startsWith('/frameforge/reports/');
+
+              for (const f of files) {
+                if (!f || typeof f.path !== 'string' || !allow(f.path)) {
+                  throw new Error('path not allowed');
+                }
+                const rel = f.path.replace(/^\//, '');
+                const abs = path.join(process.cwd(), rel);
+                fs.mkdirSync(path.dirname(abs), { recursive: true });
+                fs.writeFileSync(abs, JSON.stringify(f.json ?? {}, null, 2));
+              }
+              res.setHeader('content-type', 'application/json');
+              res.end(JSON.stringify({ ok: true, wrote: files.length }));
+            } catch (e) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ ok: false, error: String(e) }));
+            }
+          });
+        } catch (e) {
+          res.statusCode = 500; res.end(String(e));
+        }
       });
 
       server.middlewares.use('/__ff/propose', (req, res) => {

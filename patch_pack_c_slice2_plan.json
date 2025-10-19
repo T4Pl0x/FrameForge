@@ -1,0 +1,252 @@
+{
+  "name": "Patch Pack C - Slice 2: Edge Creation & Refactor Pass",
+  "version": "2.0.0",
+  "description": "Implement edge management system and refactor validation for workflow builder",
+  "slice": {
+    "name": "Slice 2: Foundation",
+    "description": "Edge creation, connection logic, and basic refactor validation",
+    "maxLOC": 300,
+    "focus": "Edge management + Guardrail + Cycle detection refactor rules"
+  },
+  "adaptations": {
+    "paths": {
+      "note": "Using src/extensions/workflow/ as base path, extending Slice 1 structure"
+    },
+    "dependencies": {
+      "note": "Reusing Patch Pack B utilities (GridSnap, useA11yLive) and Slice 1 foundations"
+    },
+    "integration": {
+      "note": "Edge layer integrates with existing FlowCanvas, maintains dynamic registration"
+    }
+  },
+  "requirements": {
+    "typescript": {
+      "strict": true,
+      "noAnyInExports": true,
+      "interfaceConsistency": true
+    },
+    "testing": {
+      "framework": "vitest",
+      "coverage": {
+        "statements": ">= 70%",
+        "branches": ">= 60%"
+      },
+      "integratedTests": true
+    },
+    "accessibility": {
+      "wcag": "2.1 AA",
+      "keyboardNavigation": true,
+      "screenReader": true,
+      "focusManagement": true
+    },
+    "performance": {
+      "edgeRendering": "SVG-based",
+      "validationComplexity": "O(n) for graph traversal",
+      "stateManagement": "minimal re-renders"
+    }
+  },
+  "implementation": {
+    "edgeStore": {
+      "purpose": "In-memory edge state management",
+      "features": [
+        "CRUD operations with validation",
+        "Graph traversal helpers",
+        "Cycle detection algorithms",
+        "Event emission for UI updates"
+      ],
+      "file": "edges/edgeStore.ts",
+      "maxLOC": 120
+    },
+    "edgeLayer": {
+      "purpose": "Visual edge rendering and interaction",
+      "features": [
+        "SVG-based edge rendering",
+        "Mouse drag connection logic",
+        "Port detection and hover states",
+        "Visual feedback for connection modes"
+      ],
+      "file": "edges/EdgeLayer.tsx",
+      "maxLOC": 150
+    },
+    "refactor": {
+      "purpose": "Flow validation and warning generation",
+      "features": [
+        "Guardrail validation (before PromptLab/UIAgent)",
+        "Cycle detection (DFS traversal)",
+        "Structured warning system",
+        "Configurable validation rules"
+      ],
+      "file": "refactor.ts",
+      "maxLOC": 100
+    },
+    "tests": {
+      "purpose": "Integrated testing for new functionality",
+      "features": [
+        "Edge store operations",
+        "Mouse connection flows",
+        "Refactor validation rules",
+        "Integration scenarios"
+      ],
+      "file": "__tests__/edges.refactor.compile.debug.test.ts",
+      "maxLOC": 200
+    }
+  },
+  "edgeCreation": {
+    "mouseFlow": {
+      "steps": [
+        "Click output port → drag → release on input port",
+        "Visual feedback during drag",
+        "Connection validation",
+        "Edge creation with event emission"
+      ]
+    },
+    "keyboardFlow": {
+      "steps": [
+        "Focus node → press 'C' for connect mode",
+        "Tab to cycle through ports",
+        "Enter to confirm connection",
+        "Esc to cancel connect mode"
+      ]
+    },
+    "validation": {
+      "rules": [
+        "No duplicate connections",
+        "Output port to input port only",
+        "No self-connections",
+        "Cycle detection on creation"
+      ]
+    },
+    "accessibility": {
+      "features": [
+        "ARIA labels for ports",
+        "Live region announcements",
+        "Focus management",
+        "Keyboard navigation support"
+      ]
+    }
+  },
+  "refactorPass": {
+    "rules": {
+      "guardrail": {
+        "description": "Guardrail required before PromptLab and UIAgent",
+        "severity": "block",
+        "implementation": "Path analysis from trigger to target nodes"
+      },
+      "cycle": {
+        "description": "No cycles allowed in workflow graph",
+        "severity": "block",
+        "implementation": "DFS traversal with visited tracking"
+      },
+      "fanOut": {
+        "description": "Maximum 4 outgoing edges per node",
+        "severity": "warn",
+        "implementation": "Edge count validation per node"
+      },
+      "promptLength": {
+        "description": "PromptLab prompts ≤ 1200 characters",
+        "severity": "warn",
+        "implementation": "Config string length validation"
+      },
+      "toolBudget": {
+        "description": "Tool nodes ≤ budget (default 6)",
+        "severity": "warn",
+        "implementation": "Tool node count validation"
+      }
+    },
+    "output": {
+      "type": "RefactorWarning[]",
+      "structure": {
+        "code": "string",
+        "message": "string", 
+        "nodeId": "string?",
+        "edgeId": "string?",
+        "severity": "'block' | 'warn'"
+      }
+    }
+  },
+  "integration": {
+    "flowCanvas": {
+      "edgeLayerOverlay": "SVG layer over canvas",
+      "eventCoordination": "Mouse event handling integration",
+      "stateSync": "Edge state with flow object",
+      "selectionManagement": "Coordinate edge and node selection"
+    },
+    "nodeComponents": {
+      "portRegistration": "Nodes expose port metadata",
+      "eventBubbling": "Edge-related events bubble up",
+      "visualCoordination": "Hover and selection state sync",
+      "accessibilityCoord": "Focus management coordination"
+    },
+    "extensionSystem": {
+      "commandRegistration": "Edge operation commands",
+      "eventBusIntegration": "Edge lifecycle events",
+      "proposalSystem": "Edge mutations via proposals",
+      "viewRegistry": "No changes to dynamic registration"
+    }
+  },
+  "testing": {
+    "unitTests": {
+      "edgeStore": "CRUD operations, validation, graph traversal",
+      "refactorEngine": "Rule application, warning generation",
+      "utilities": "Path calculation, validation helpers"
+    },
+    "integrationTests": {
+      "edgeCreation": "Mouse and keyboard connection flows",
+      "refactorIntegration": "Flow validation cycle",
+      "eventSystem": "Edge lifecycle event handling"
+    },
+    "accessibilityTests": {
+      "keyboardNavigation": "Edge creation via keyboard",
+      "screenReader": "Port identification and announcements",
+      "focusManagement": "Focus order and restoration"
+    }
+  },
+  "deliverables": {
+    "core": [
+      "edges/edgeStore.ts",
+      "edges/EdgeLayer.tsx", 
+      "refactor.ts",
+      "__tests__/edges.refactor.compile.debug.test.ts"
+    ],
+    "updates": [
+      "FlowCanvas.tsx (integrate EdgeLayer)",
+      "flowTypes.ts (add edge-related types)"
+    ],
+    "documentation": [
+      "Edge creation API documentation",
+      "Refactor rule specifications",
+      "Accessibility implementation guide"
+    ]
+  },
+  "acceptanceCriteria": {
+    "edgeCreation": [
+      "Mouse drag creates valid connections",
+      "Keyboard 'C' + Tab + Enter creates connections",
+      "Delete key removes selected edges",
+      "Esc cancels connect mode",
+      "Live region announces connections"
+    ],
+    "refactorPass": [
+      "runRefactor() returns guardrail warnings",
+      "Cycle detection blocks invalid flows",
+      "Fan-out warnings for >4 edges",
+      "Prompt length warnings for >1200 chars",
+      "Tool budget warnings for >6 tools"
+    ],
+    "quality": [
+      "Test coverage ≥70% statements / ≥60% branches",
+      "No TypeScript errors in strict mode",
+      "Full WCAG 2.1 AA compliance",
+      "Dynamic registration maintained"
+    ]
+  },
+  "nextSteps": {
+    "futureSlices": [
+      "Compile pass: Flow → flow.json transformation",
+      "Debug pass: Single trace simulation",
+      "Remaining nodes: UIAgent, Guardrail, Tool, Compiler, Sandbox, Publisher",
+      "Keyboard edge creation completion",
+      "Advanced refactor rules"
+    ]
+  }
+}

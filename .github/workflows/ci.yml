@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, stabilize/**, feature/** ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Unit tests (with coverage)
+        run: pnpm run test:coverage
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: E2E tests
+        run: pnpm run test:e2e
+
+      - name: Lighthouse smoke (optional)
+        run: pnpm run perf:lh || echo "Lighthouse optional in CI; continuing"
+
+      - name: Gates (coverage/a11y/build)
+        run: pnpm run gates

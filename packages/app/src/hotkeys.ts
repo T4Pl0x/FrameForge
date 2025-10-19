@@ -4,7 +4,7 @@ export interface HotkeysOptions {
   os?: {
     nextWindow: () => void;
     snapActive: (pos: 'left'|'right'|'max') => void;
-    openApp: (app: 'publish'|'agents'|'tools'|'settings') => void;
+    openApp: (app: 'publish'|'agents'|'tools'|'settings'|'mermaid'|'assistant') => void;
   }
 }
 
@@ -35,6 +35,8 @@ export function installHotkeys(opts: HotkeysOptions){
       case 'a': opts.os ? opts.os.openApp('agents') : opts.navigate('/agents'); break;
       case 't': opts.os ? opts.os.openApp('tools') : opts.navigate('/tools'); break;
       case 's': opts.os ? opts.os.openApp('settings') : opts.navigate('/settings'); break;
+      case 'm': opts.os ? opts.os.openApp('mermaid') : opts.navigate('/app/mermaid'); break;
+      case 'i': opts.os ? opts.os.openApp('assistant') : opts.navigate('/app/assistant'); break;
       default: break;
     }
   }

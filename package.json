@@ -1,7 +1,7 @@
 {
   "name": "frameforge-os",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "type": "module",
   "workspaces": [
     "packages/*"
@@ -11,10 +11,20 @@
     "dev": "pnpm --filter @frameforge/app dev",
     "build": "pnpm --filter @frameforge/app build",
     "preview": "pnpm --filter @frameforge/app preview",
+    "lint": "eslint .",
+    "typecheck": "tsc -b -v",
     "validate:spec": "node scripts/validate-spec.mjs",
     "migrate:spec": "node scripts/migrate-spec.mjs --from v1 --to v1.1",
     "reports:verify:one": "node scripts/emit-build-summary.js --mode one",
-    "reports:verify:matrix": "node scripts/emit-build-summary.js --mode matrix"
+    "reports:verify:matrix": "node scripts/emit-build-summary.js --mode matrix",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "gates": "tsx scripts/ci_summarize_gates.ts",
+    "perf:lh": "node --loader tsx scripts/lighthouse-ci.mjs",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test:coverage",
+    "docs:open": "xdg-open ./docs/QUICKSTART.md || open ./docs/QUICKSTART.md || true"
   },
   "engines": {
     "node": ">=18"

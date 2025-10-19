@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["packages/app/src/*"],
+      "@kernel/*": ["packages/kernel/src/*"],
+      "@shared/*": ["packages/shared/src/*"]
+    }
+  },
+  "references": [
+    { "path": "packages/kernel" },
+    { "path": "packages/shared" },
+    { "path": "packages/app" }
+  ]
+}

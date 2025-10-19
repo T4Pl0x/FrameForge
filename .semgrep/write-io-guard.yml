@@ -1,0 +1,61 @@
+rules:
+  - id: block-direct-spec-writes
+    message: |
+      ❌ BLOCKED: Direct write to spec/ files outside kernel.apply
+
+      FrameForge mutation integrity requires all spec/ modifications to go through
+      the kernel.apply system. This ensures audit logging, approval workflows,
+      and prevents direct unauthorized changes to core specifications.
+
+      Either:
+      1. Use the proposal system (/ff/propose → approvals → /ff/apply)
+      2. Go through kernel.apply() in sanctioned extension code
+
+      Direct file I/O to spec/ is forbidden outside the kernel.apply authorization boundary.
+    severity: ERROR
+    languages:
+      - typescript
+      - javascript
+      - python
+      - go
+      - rust
+    patterns:
+      # Block direct file writes to spec/ paths
+      - pattern: |
+          fs.writeFile($PATH, ..., ($ERR, $CB) => { ... });
+          ...
+          $PATH.matches(/^spec\//)
+      - pattern: |
+          fs.writeFileSync($PATH, ...);
+          ...
+          $PATH.includes("spec/")
+      - pattern: |
+          writeFile($PATH, ..., ($ERR, $CB) => { ... });
+          ...
+          $PATH.matches(/^spec\//)
+      - pattern: |
+          writeFileSync($PATH, ...);
+          ...
+          $PATH.includes("spec/")
+
+      # Block direct file writes to .echo/ paths (gate summaries)
+      - pattern: |
+          fs.writeFile($PATH, ..., ($ERR, $CB) => { ... });
+          ...
+          $PATH.matches(/^\.echo\//)
+      - pattern: |
+          fs.writeFileSync($PATH, ...);
+          ...
+          $PATH.includes(".echo/")
+
+    # Exempt kernel.apply and authorized extension paths
+    paths:
+      include:
+        - "**/packages/kernel/src/host/apply.ts"
+        - "**/packages/*/src/**/*.ts"
+      exclude:
+        - "**/node_modules/**"
+        - "**/dist/**"
+        - "**/build/**"
+        - "**/*.test.ts"
+        - "**/*.spec.ts"
