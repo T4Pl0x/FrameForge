@@ -1,0 +1,342 @@
+/* Control Cluster Styles */
+.control-cluster {
+  position: absolute;
+  z-index: 1000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+}
+
+.control-cluster__buttons {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.control-cluster__add-button,
+.control-cluster__delete-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.15s ease-in-out;
+  -webkit-font-smoothing: antialiased;
+}
+
+.control-cluster__add-button {
+  background: #3B82F6;
+  color: white;
+}
+
+.control-cluster__add-button:hover {
+  background: #1D4ED8;
+  transform: scale(1.05);
+}
+
+.control-cluster__add-button:focus {
+  outline: 2px solid #1D4ED8;
+  outline-offset: 2px;
+}
+
+.control-cluster__delete-button {
+  background: #EF4444;
+  color: white;
+}
+
+.control-cluster__delete-button:hover {
+  background: #DC2626;
+  transform: scale(1.05);
+}
+
+.control-cluster__delete-button:focus {
+  outline: 2px solid #DC2626;
+  outline-offset: 2px;
+}
+
+/* Menu */
+.control-cluster__menu {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.05);
+  min-width: 320px;
+  max-width: 400px;
+  overflow: hidden;
+  animation: menuSlideIn 0.15s ease-out;
+}
+
+@keyframes menuSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tabs */
+.control-cluster__tabs {
+  display: flex;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.control-cluster__tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+  transition: all 0.15s ease-in-out;
+  border-bottom: 2px solid transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+.control-cluster__tab:hover {
+  color: #374151;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.control-cluster__tab.active {
+  color: #3B82F6;
+  background: white;
+  border-bottom-color: #3B82F6;
+}
+
+.control-cluster__tab:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: -2px;
+}
+
+/* Panel */
+.control-cluster__panel {
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.control-cluster__tab-content {
+  animation: tabFadeIn 0.15s ease-out;
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.control-cluster__tab-content h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Form Groups */
+.control-cluster__form-group {
+  margin-bottom: 12px;
+}
+
+.control-cluster__form-group:last-child {
+  margin-bottom: 0;
+}
+
+.control-cluster__form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.control-cluster__form-group input,
+.control-cluster__form-group select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #D1D5DB;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.control-cluster__form-group input:focus,
+.control-cluster__form-group select:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.control-cluster__form-group input[type="color"] {
+  height: 32px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.control-cluster__form-group input[type="range"] {
+  padding: 0;
+}
+
+.control-cluster__form-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 6px;
+}
+
+.control-cluster__input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.control-cluster__input-row input {
+  flex: 1;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .control-cluster__menu {
+    border: 2px solid #000000;
+    background: #FFFFFF;
+  }
+
+  .control-cluster__tabs {
+    background: #F0F0F0;
+    border-bottom: 2px solid #000000;
+  }
+
+  .control-cluster__tab {
+    color: #000000;
+    border-bottom: 2px solid transparent;
+  }
+
+  .control-cluster__tab.active {
+    background: #FFFFFF;
+    border-bottom-color: #000000;
+  }
+
+  .control-cluster__form-group input,
+  .control-cluster__form-group select {
+    border: 2px solid #000000;
+    background: #FFFFFF;
+    color: #000000;
+  }
+
+  .control-cluster__form-group input:focus,
+  .control-cluster__form-group select:focus {
+    border-color: #000000;
+    box-shadow: 0 0 0 2px #000000;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .control-cluster__menu,
+  .control-cluster__tab-content,
+  .control-cluster__add-button,
+  .control-cluster__delete-button,
+  .control-cluster__tab {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .control-cluster__menu {
+    background: #1F2937;
+    border-color: #374151;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .control-cluster__tabs {
+    background: #111827;
+    border-bottom-color: #374151;
+  }
+
+  .control-cluster__tab {
+    color: #9CA3AF;
+  }
+
+  .control-cluster__tab:hover {
+    color: #F3F4F6;
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  .control-cluster__tab.active {
+    color: #3B82F6;
+    background: #1F2937;
+  }
+
+  .control-cluster__tab-content h4 {
+    color: #F9FAFB;
+  }
+
+  .control-cluster__form-group label {
+    color: #D1D5DB;
+  }
+
+  .control-cluster__form-group input,
+  .control-cluster__form-group select {
+    background: #374151;
+    border-color: #4B5563;
+    color: #F9FAFB;
+  }
+
+  .control-cluster__form-group input:focus,
+  .control-cluster__form-group select:focus {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .control-cluster__menu {
+    min-width: 280px;
+    max-width: 320px;
+  }
+
+  .control-cluster__tabs {
+    flex-wrap: wrap;
+  }
+
+  .control-cluster__tab {
+    flex: 1 1 50%;
+    min-width: 0;
+  }
+
+  .control-cluster__panel {
+    padding: 12px;
+  }
+}
+
+/* Touch Targets */
+@media (pointer: coarse) {
+  .control-cluster__add-button,
+  .control-cluster__delete-button {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .control-cluster__tab {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+}

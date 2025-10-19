@@ -1,0 +1,250 @@
+
+/* Selection Chrome Styles */
+.selection-chrome {
+  box-sizing: border-box;
+  outline: 2px solid #3B82F6;
+  outline-offset: -2px;
+  background: rgba(59, 130, 246, 0.1);
+  transition: outline-color 0.15s ease-in-out;
+}
+
+.selection-chrome.active {
+  outline-color: #1D4ED8;
+  background: rgba(29, 78, 216, 0.1);
+}
+
+.selection-chrome__border {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #3B82F6;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.selection-chrome.active .selection-chrome__border {
+  border-color: #1D4ED8;
+  opacity: 0.8;
+}
+
+/* Drag Bar */
+.selection-chrome__drag-bar {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background: #3B82F6;
+  cursor: move;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.selection-chrome__drag-bar:hover {
+  background: #1D4ED8;
+}
+
+.selection-chrome__drag-bar::before {
+  content: "⋮⋮";
+  letter-spacing: 2px;
+}
+
+/* Resize Handles */
+.selection-chrome__handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border: 2px solid #3B82F6;
+  border-radius: 2px;
+  z-index: 10;
+  transition: all 0.15s ease-in-out;
+}
+
+.selection-chrome__handle:hover {
+  background: #3B82F6;
+  border-color: #1D4ED8;
+  transform: scale(1.2);
+}
+
+.selection-chrome__handle:focus {
+  outline: 2px solid #1D4ED8;
+  outline-offset: 2px;
+}
+
+/* Handle positions */
+.selection-chrome__handle--nw {
+  top: -6px;
+  left: -6px;
+  cursor: nw-resize;
+}
+
+.selection-chrome__handle--n {
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: n-resize;
+}
+
+.selection-chrome__handle--ne {
+  top: -6px;
+  right: -6px;
+  cursor: ne-resize;
+}
+
+.selection-chrome__handle--e {
+  top: 50%;
+  right: -6px;
+  transform: translateY(-50%);
+  cursor: e-resize;
+}
+
+.selection-chrome__handle--se {
+  bottom: -6px;
+  right: -6px;
+  cursor: se-resize;
+}
+
+.selection-chrome__handle--s {
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: s-resize;
+}
+
+.selection-chrome__handle--sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: sw-resize;
+}
+
+.selection-chrome__handle--w {
+  top: 50%;
+  left: -6px;
+  transform: translateY(-50%);
+  cursor: w-resize;
+}
+
+/* Handle hover states */
+.selection-chrome__handle--nw:hover,
+.selection-chrome__handle--ne:hover,
+.selection-chrome__handle--se:hover,
+.selection-chrome__handle--sw:hover {
+  transform: scale(1.2);
+}
+
+.selection-chrome__handle--n:hover,
+.selection-chrome__handle--s:hover {
+  transform: translateX(-50%) scale(1.2);
+}
+
+.selection-chrome__handle--e:hover,
+.selection-chrome__handle--w:hover {
+  transform: translateY(-50%) scale(1.2);
+}
+
+/* Content */
+.selection-chrome__content {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.selection-chrome__content > * {
+  pointer-events: auto;
+}
+
+/* Alignment Guides */
+.selection-chrome__alignment-guide {
+  position: absolute;
+  background: #EF4444;
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.selection-chrome__alignment-guide--horizontal {
+  width: 100%;
+  height: 1px;
+  border-top: 1px dashed #EF4444;
+}
+
+.selection-chrome__alignment-guide--vertical {
+  width: 1px;
+  height: 100%;
+  border-left: 1px dashed #EF4444;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .selection-chrome {
+    outline: 3px solid #000000;
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .selection-chrome.active {
+    outline-color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .selection-chrome__border {
+    border: 3px solid #000000;
+    opacity: 1;
+  }
+
+  .selection-chrome.active .selection-chrome__border {
+    border-color: #FFFFFF;
+  }
+
+  .selection-chrome__drag-bar {
+    background: #000000;
+    color: #FFFFFF;
+  }
+
+  .selection-chrome__handle {
+    background: #FFFFFF;
+    border-color: #000000;
+  }
+
+  .selection-chrome__handle:hover {
+    background: #000000;
+    border-color: #FFFFFF;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .selection-chrome,
+  .selection-chrome__border,
+  .selection-chrome__drag-bar,
+  .selection-chrome__handle {
+    transition: none;
+  }
+}
+
+/* Focus Management */
+.selection-chrome:focus-within {
+  outline: 3px solid #1D4ED8;
+  outline-offset: 2px;
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+   
