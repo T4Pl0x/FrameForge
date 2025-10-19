@@ -1,15 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import App from '../App-Refactored.jsx';
+import React, { useEffect, useState } from 'react';
+import { getViews } from './registry/viewRegistry';
 import AgentsEntry from '../components/AgentsEntry.jsx';
 import ProposalsEntry from '../components/ProposalsEntry.jsx';
 import RunHistoryPanel from '../components/RunHistoryPanel.jsx';
 import Toasts from '../components/Toasts.jsx';
 import GhostLayer from '../components/GhostLayer.jsx';
 import ToolsOverlay from '../components/ToolsOverlay.jsx';
-import CompilerView from './CompilerView.jsx';
-import SandboxView from './SandboxView.jsx';
-import PublishView from './PublishView.jsx';
-import PromptLabView from './PromptLabView.jsx';
 import GatesBadges from '../components/GatesBadges.jsx';
 import PrStatusPill from '../components/PrStatusPill.jsx';
 import { startGatesTap, subscribeGates, getGatesInfo } from '../state/gates.js';

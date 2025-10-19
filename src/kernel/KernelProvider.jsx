@@ -38,23 +38,23 @@ export function KernelProvider({ children }) {
   useEffect(() => {
     try { window.__ff_kernel_api = createKernelApi(kernel); } catch {}
   }, [kernel]);
-  // Dev auto-approve
+  // Only auto-approve when explicitly enabled via env
   useEffect(() => {
-    const isAuto = (() => {
+    const isDevAuto = import.meta?.env?.VITE_FF_DEV_AUTOAPPROVE === 'true' || false;
+
+    const off = kernel.bus.on('proposal:submitted', async ({ id }) => {
       try {
-        const envFlag = (import.meta && import.meta.env && import.meta.env.VITE_FF_DEV_AUTO_APPROVE) || '';
-        const lc = (typeof localStorage !== 'undefined' && localStorage.getItem('FF_DEV_AUTO_APPROVE')) || '';
-        return String(envFlag || lc).toLowerCase() === 'true';
-      } catch { return false; }
-    })();
-    if (!isAuto) return;
-    const off = kernel.bus.on('proposal:submitted', ({ id }) => {
-      try { kernel.proposals.preflight(id); } catch {}
-      try { kernel.proposals.approve(id, { by: 'dev-auto', user }); } catch {}
-      try { kernel.proposals.apply(id, { user }); } catch {}
+        await kernel.proposals.preflight(id);
+        if (isDevAuto) {
+          await kernel.proposals.approve(id, { by: 'dev-auto', user });
+          await kernel.proposals.apply(id, { user });
+        }
+      } catch (err) {
+        console.error('Preflight/approval failed', err);
+      }
     });
     return () => { try { off(); } catch {} };
-  }, [kernel]);
+  }, [kernel, user]);
   return <KernelContext.Provider value={kernel}>{children}</KernelContext.Provider>;
 }
 

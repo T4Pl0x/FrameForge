@@ -1,0 +1,8 @@
+{
+  "ticketId": "align-registry",
+  "createdAt": "2025-10-16T00:00:00.000Z",
+  "patches": [
+    { "op": "add", "path": "/tools/registry.json#/extensions", "value": [] }
+  ]
+}
+

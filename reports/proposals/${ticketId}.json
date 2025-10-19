@@ -1,0 +1,15 @@
+{
+  "ticketId": "70d311ff-9ccc-43c5-9bcd-d85d42e73989",
+  "createdAt": "2025-10-16T20:16:03.884Z",
+  "patches": [
+    {
+      "op": "add",
+      "path": "/tools/registry.json#/extensions/-",
+      "value": {
+        "id": "demoapp-web",
+        "name": "@frameforge/ext-demoapp",
+        "path": "packages/ext-demoapp-web"
+      }
+    }
+  ]
+}
