@@ -19,6 +19,7 @@ import { Composer as PromptComposer } from "./prompt-lab/Composer";
 import { getWindowNode } from "./os/extHost";
 import { Builder } from "./builder/Builder";
 import { ApprovalsCard } from "./approvals/ApprovalsCard";
+import SettingsPanel from "./settings/SettingsPanel";
 
 function useQueryFlag(name: string){
   return useMemo(() => {
@@ -79,7 +80,7 @@ export default function AppFrame() {
           switch (w.app){
             case 'agents': return <AgentPanel/>;
             case 'tools': return <ToolHub/>;
-            case 'settings': return <div className="muted">Settings (control center stub)</div>;
+            case 'settings': return <SettingsPanel/>;
             case 'processes': return <div className="muted">Processes (runs list stub)</div>;
             case 'logs': return <div className="muted">Kernel Logs (debug stub)</div>;
             case 'approvals': return <div className="widget"><ApprovalsCard/></div>;
