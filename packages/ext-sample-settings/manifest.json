@@ -1,0 +1,8 @@
+{
+  "name": "Sample Settings Reader",
+  "version": "0.1.0",
+  "entry": { "module": "src/entry.tsx" },
+  "capabilities": ["ui"],
+  "permissions": []
+}
+

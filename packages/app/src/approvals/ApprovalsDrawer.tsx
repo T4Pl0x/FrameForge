@@ -143,6 +143,26 @@ export function ApprovalsDrawer() {
                       {dryRun ? 'Preview Apply' : 'Apply'}
                     </button>
                   )}
+                  <button
+                    onClick={async () => {
+                      try {
+                        const base = (import.meta as any).env?.VITE_REPO_ROOT as string | undefined;
+                        if (!base) throw new Error('VITE_REPO_ROOT not set');
+                        const art: any = await import(`/@fs/${base}/frameforge/reports/proposals/${p.ticketId}.json?${Date.now()}`);
+                        const data = (art?.default || art) as any;
+                        const blob = new Blob([JSON.stringify(data.patches || [], null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = `${p.ticketId}.patches.json`;
+                        document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+                      } catch (e:any) {
+                        setMsg(`Download failed: ${e?.message || e}`);
+                      }
+                    }}
+                    style={{padding:"4px 8px", borderRadius:6}}
+                  >
+                    Download Patch
+                  </button>
                 </div>
               </div>
               <details style={{marginTop:6}}>

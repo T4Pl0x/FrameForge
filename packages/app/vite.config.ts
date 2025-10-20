@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 
 const DEV = process.env.NODE_ENV !== 'production';
+const EXPOSE_DEV = process.env.VITE_EXPOSE_DEV === '1';
 
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
@@ -20,7 +21,9 @@ export default defineConfig({
   server: {
     port: 5173,
     configureServer(server) {
-      if (!DEV) return; // never expose in prod
+      if (!(DEV && EXPOSE_DEV)) return; // opt-in even in dev
+      // eslint-disable-next-line no-console
+      console.warn('[FF][DEV] Exposing dev-only endpoints: /__ff/*');
 
       server.middlewares.use('/__ff/write-report', async (req, res) => {
         try {
