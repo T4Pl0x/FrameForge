@@ -21,7 +21,10 @@ async function loadSchemas() {
     const files = await fs.readdir(SCHEMAS_DIR);
     for (const f of files.filter(x => x.endsWith('.json'))) {
       const content = JSON.parse(await fs.readFile(path.join(SCHEMAS_DIR, f), 'utf8'));
-      ajv.addSchema(content, `/${f}`);
+      // Avoid requiring meta-schema availability in runtime by dropping $schema
+      const normalized = { ...content };
+      if (normalized.$schema) delete normalized.$schema;
+      ajv.addSchema(normalized, `/${f}`);
     }
   } catch (err) {
     // no schemas dir -> nothing to load
