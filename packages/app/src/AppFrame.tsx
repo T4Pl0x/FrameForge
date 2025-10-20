@@ -72,6 +72,28 @@ export default function AppFrame() {
 
   return (
     <div className={"app-grid" + (showDock ? "" : " no-dock") }>
+      {(import.meta as any).env?.VITE_EXPOSE_DEV === '1' && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            right: 8,
+            top: 8,
+            zIndex: 9999,
+            background: '#1f2937',
+            color: '#fff',
+            padding: '6px 10px',
+            borderRadius: 6,
+            boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
+            fontSize: 12,
+            opacity: 0.9,
+          }}
+          title="Dev-only endpoints (/__ff/*) are exposed because VITE_EXPOSE_DEV=1"
+        >
+          DEV endpoints exposed
+        </div>
+      )}
       {showDock && <Dock active={route} onNavigate={setRoute} />}
 
       {(FLAGS.OS_DESKTOP || FLAGS.OS_WINDOWS) ? (
