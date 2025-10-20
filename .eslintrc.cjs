@@ -1,4 +1,4 @@
-module.exports = {
+﻿module.exports = {
   root: true,
   ignorePatterns: [
     'node_modules/',
@@ -24,7 +24,15 @@ module.exports = {
       rules: {
         'no-console': ['warn', { allow: ['warn', 'error'] }],
         '@typescript-eslint/no-explicit-any': 'off',
-        'react/react-in-jsx-scope': 'off'
+        'react/react-in-jsx-scope': 'off',
+        // Disallow alert/window.alert in UI code — use toasts instead
+        'no-restricted-globals': [ 'error',
+          { name: 'alert', message: 'Use toasts instead of alert() in UI code.' }
+        ],
+        'no-restricted-properties': [
+          'error',
+          { object: 'window', property: 'alert', message: 'Use toasts instead of window.alert().' }
+        ]
       }
     }
   ]

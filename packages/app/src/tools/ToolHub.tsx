@@ -19,6 +19,7 @@ function dot(status?: string){
 export function ToolHub() {
   const [tools, setTools] = useState<Tool[]>([]);
   const [refresh, setRefresh] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
   useEffect(() => { (async () => setTools(await readRegistry()))(); }, [refresh]);
   useEffect(() => { const t = setInterval(()=>setRefresh(x=>x+1), 10000); return () => clearInterval(t); }, []);
 
@@ -49,8 +50,28 @@ export function ToolHub() {
         ))}
       </ul>
       <div style={{marginTop:8}}>
-        <button className="btn" onClick={()=>setRefresh(x=>x+1)}>Refresh</button>
+        <button className="btn" onClick={()=>setRefresh(x=>x+1)} style={{marginRight:8}}>Refresh</button>
+        <button className="btn" onClick={()=>setShowSettings(s=>!s)}>{showSettings ? 'Hide' : 'Show'} Settings</button>
       </div>
+      {showSettings && (
+        <div style={{marginTop:12, border:'1px solid var(--border)', borderRadius:8, padding:8}}>
+          <div style={{fontWeight:600, marginBottom:6}}>Tool Settings (read-only)</div>
+          <ul style={{listStyle:'none', paddingLeft:0, display:'grid', gap:6}}>
+            {tools.map(t => (
+              <li key={t.id}>
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <div><code>{t.id}</code> <span className="muted" style={{fontSize:12}}>{t.kind}</span></div>
+                  <div className="muted" style={{fontSize:12}}>{t.endpoint || 'n/a'}</div>
+                </div>
+                <div className="muted" style={{fontSize:12}}>callableBy: {t.permissions?.callableBy ? (t.permissions.callableBy as string[]).join(', ') : 'n/a'}</div>
+                {t['rateLimit'] && (
+                  <div className="muted" style={{fontSize:12}}>rateLimit: {t['rateLimit'].rpm} rpm / burst {t['rateLimit'].burst}</div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

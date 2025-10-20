@@ -1,13 +1,75 @@
-{
-  "tools": [
-    {
-      "id": "a11y_scan",
-      "kind": "mcp",
-      "endpoint": "https://example.com/a11y",
-      "status": "offline",
-      "lastPingISO": null,
-      "permissions": { "callableBy": ["@frameforge/ext-ui"] }
-    }
-  ],
-  "extensions": []
+﻿{
+    "tools":  [
+                  {
+                      "id":  "a11y_scan",
+                      "kind":  "mcp",
+                      "endpoint":  "https://example.com/a11y",
+                      "status":  "offline",
+                      "lastPingISO":  null,
+                      "permissions":  {
+                                          "callableBy":  [
+                                                             "@frameforge/ext-ui"
+                                                         ]
+                                      }
+                  },
+                  {
+                      "id":  "llm_openrouter",
+                      "kind":  "mcp",
+                      "endpoint":  "https://openrouter.ai/api/v1",
+                      "status":  "offline",
+                      "lastPingISO":  null,
+                      "rateLimit":  {
+                                        "rpm":  60,
+                                        "burst":  12
+                                    },
+                      "permissions":  {
+                                          "callableBy":  [
+                                                             "@frameforge/ext-ui",
+                                                             "@frameforge/app/agents"
+                                                         ]
+                                      }
+                  },
+                  {
+                      "id":  "rag_indexer",
+                      "kind":  "http",
+                      "endpoint":  "/api/tools/rag/index",
+                      "status":  "offline",
+                      "lastPingISO":  null,
+                      "rateLimit":  {
+                                        "rpm":  30,
+                                        "burst":  10
+                                    },
+                      "permissions":  {
+                                          "callableBy":  [
+                                                             "@frameforge/app/agents",
+                                                             "@frameforge/app/ui"
+                                                         ]
+                                      },
+                      "timeouts":  {
+                                       "ms":  20000
+                                   }
+                  },
+                  {
+                      "id":  "search_docs",
+                      "kind":  "http",
+                      "endpoint":  "/api/tools/rag/search",
+                      "status":  "offline",
+                      "lastPingISO":  null,
+                      "rateLimit":  {
+                                        "rpm":  60,
+                                        "burst":  20
+                                    },
+                      "permissions":  {
+                                          "callableBy":  [
+                                                             "@frameforge/app/agents"
+                                                         ]
+                                      },
+                      "timeouts":  {
+                                       "ms":  15000
+                                   }
+                  }
+              ],
+    "extensions":  [
+
+                   ]
 }

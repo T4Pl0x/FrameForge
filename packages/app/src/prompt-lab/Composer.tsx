@@ -1,11 +1,13 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import type { PromptDraft } from '@frameforge/shared';
 import { TOKENS, expandTokens } from './Tokens';
 import { VariablesPanel } from './VariablesPanel';
 import { Scorecard } from './Scorecard';
 import { kernel } from '../kernel';
+import { useToast } from '../ui/toast/ToastProvider';
 
 export function Composer(){
+  const { push } = useToast();
   const [id, setId] = useState('draft-1');
   const [parts, setParts] = useState({ goal:'', constraints:'', style:'', steps:'', critique:'', schema:'' });
   const [tokens, setTokens] = useState<string[]>([]);
@@ -59,14 +61,14 @@ export function Composer(){
           </div>
           <div style={{display:'flex', gap:8}}>
             <button className="btn" onClick={onSave}>Save (proposal)</button>
-            <button className="btn" onClick={()=>alert('Dry run (stub)')}>Dry Run</button>
+            <button className="btn" onClick={()=>{ try { (window as any).__ff_toast?.({ kind:'info', text:'Dry run (stub)' }); } catch {} }}>Dry Run</button>
           </div>
         </div>
       </section>
 
       <section className="widget">
         <div className="widget-title">Preview</div>
-        <pre style={{whiteSpace:'pre-wrap'}}>{preview || '—'}</pre>
+        <pre style={{whiteSpace:'pre-wrap'}}>{preview || 'â€”'}</pre>
         <div style={{marginTop:12}}>
           <VariablesPanel onChange={(v,c)=>{ setVars(v); setCtx(c); }} />
         </div>

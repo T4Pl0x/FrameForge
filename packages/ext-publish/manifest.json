@@ -1,0 +1,8 @@
+{
+  "name": "@frameforge/ext-publish",
+  "version": "0.1.0",
+  "entry": "src/entry.ts",
+  "capabilities": ["publish.openPR", "publish.statuses", "ownerOverride"],
+  "permissions": ["propose:spec"]
+}
+

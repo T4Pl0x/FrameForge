@@ -7,6 +7,7 @@ import { Drawer } from "./workspace/Drawer";
 import { ApprovalsDrawer } from "./approvals/ApprovalsDrawer";
 import { GateBadges } from "./gates/GateBadges";
 import AgentPanel from "./agents/AgentPanel";
+import { useAgentHealth } from "./agents/useAgentHealth";
 import { ToolHub } from "./tools/ToolHub";
 import { RagPanel } from "./rag/RagPanel";
 import { installHotkeys } from "./hotkeys";
@@ -42,6 +43,15 @@ function DebugOverlay({ flags, route }:{ flags:any; route:string }){
 export default function AppFrame() {
   const [route, setRoute] = useState<string>('/');
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showAgents, setShowAgents] = useState(false);
+  const health = useAgentHealth();
+  const agentStatus = (() => {
+    const statuses = health.map(h => h.status);
+    if (statuses.some(s => s === 'red')) return 'red';
+    if (statuses.some(s => s === 'yellow')) return 'yellow';
+    if (statuses.every(s => s === 'green')) return 'green';
+    return 'unknown';
+  })() as 'green'|'red'|'yellow'|'unknown';
 
   useEffect(() => {
     const uninstall = installHotkeys({
@@ -150,7 +160,7 @@ export default function AppFrame() {
       </Surface>
       )}
 
-      {FLAGS.WORKSPACE_SHELL && <BottomBar />}
+      {FLAGS.WORKSPACE_SHELL && <BottomBar onOpenAgents={()=>setShowAgents(true)} agentStatus={agentStatus} />}
 
       {FLAGS.APPROVALS_DRAWER && (
         <Drawer title="Approvals">
@@ -158,6 +168,15 @@ export default function AppFrame() {
           {FLAGS.DEV_AUTO_APPROVE && (
             <div className="muted" style={{marginTop:8}}>Dev auto-approve: ON</div>
           )}
+        </Drawer>
+      )}
+
+      {showAgents && (
+        <Drawer title="Agents">
+          <div style={{display:'flex', justifyContent:'flex-end'}}>
+            <button className="btn" onClick={()=>setShowAgents(false)}>Close</button>
+          </div>
+          <AgentPanel />
         </Drawer>
       )}
 

@@ -120,6 +120,9 @@ export class Kernel {
     return {
       proposals: {
         submit: (payload) => this._submit(payload)
+      },
+      spec: {
+        read: (path) => this._readSpec(path)
       }
     };
   }
@@ -176,6 +179,13 @@ export class Kernel {
       this._apply(ticketId);
     }
     return ticket;
+  }
+
+  async _readSpec(path){
+    const p = path.replace(/^spec\//,'');
+    const scope = p.replace(/\.json$/,'');
+    const file = this._scopeToPath(scope);
+    return await readJson(file);
   }
 
   _approve(ticketId, approver){

@@ -1,0 +1,9 @@
+{
+  "id": "llm_openrouter",
+  "kind": "mcp",
+  "endpoint": "https://openrouter.ai/api/v1",
+  "status": "offline",
+  "lastPingISO": null,
+  "rateLimit": { "rpm": 60, "burst": 12 },
+  "permissions": { "callableBy": ["@frameforge/ext-ui", "@frameforge/app/agents"] }
+}

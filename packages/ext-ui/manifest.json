@@ -1,9 +1,15 @@
 {
-  "name": "ext-ui",
+  "name": "@frameforge/ext-ui",
   "version": "1.0.0",
   "entry": {
-    "module": "./dist/entry.js"
+    "module": "src/entry.tsx"
   },
-  "capabilities": ["read", "write"],
-  "permissions": ["spec:read", "spec:write", "proposals:create"]
+  "capabilities": [
+    "componentPalette",
+    "inspectorPanels",
+    "canvasTools",
+    "tutorials",
+    "proposeSpecDiff"
+  ],
+  "permissions": ["propose:spec"]
 }

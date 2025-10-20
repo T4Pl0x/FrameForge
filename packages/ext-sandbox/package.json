@@ -1,6 +1,11 @@
 {
   "name": "@frameforge/ext-sandbox",
   "version": "0.1.0",
-  "private": true
+  "private": true,
+  "type": "module",
+  "main": "src/entry.ts",
+  "scripts": {
+    "build": "echo ok"
+  }
 }
 

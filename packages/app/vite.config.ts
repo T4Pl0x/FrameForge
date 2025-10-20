@@ -190,6 +190,177 @@ export default defineConfig({
           }
         });
       });
+
+      // ---------- GH PROXY (dev-only) ----------
+      async function ghFetch(path: string, init?: RequestInit) {
+        const token = process.env.VITE_GH_TOKEN || process.env.GH_TOKEN || '';
+        const url = `https://api.github.com${path}`;
+        const headers = {
+          'Accept': 'application/vnd.github+json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          ...(init?.headers || {}) as any,
+        } as Record<string, string>;
+        const r = await fetch(url, { ...(init || {}), headers });
+        return r;
+      }
+
+      server.middlewares.use('/__ff/gh/get', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end('POST only'); return; }
+        let buf = '';
+        req.on('data', (c) => { buf += c; });
+        req.on('end', async () => {
+          try {
+            const body = JSON.parse(buf || '{}');
+            const path = String(body.path || '');
+            if (!path.startsWith('/')) throw new Error('invalid path');
+            const r = await ghFetch(path, { method: 'GET' });
+            const json = await r.json();
+            res.setHeader('content-type', 'application/json');
+            res.statusCode = r.status;
+            res.end(JSON.stringify(json));
+          } catch (e: any) {
+            res.statusCode = 400; res.end(JSON.stringify({ error: e?.message || 'bad request' }));
+          }
+        });
+      });
+
+      server.middlewares.use('/__ff/gh/post', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end('POST only'); return; }
+        let buf = '';
+        req.on('data', (c) => { buf += c; });
+        req.on('end', async () => {
+          try {
+            const body = JSON.parse(buf || '{}');
+            const path = String(body.path || '');
+            if (!path.startsWith('/')) throw new Error('invalid path');
+            const r = await ghFetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body.body || {}) });
+            const text = await r.text();
+            res.setHeader('content-type', 'application/json');
+            res.statusCode = r.status;
+            res.end(text || '{}');
+          } catch (e: any) {
+            res.statusCode = 400; res.end(JSON.stringify({ error: e?.message || 'bad request' }));
+          }
+        });
+      });
+
+      server.middlewares.use('/__ff/gh/get-zip-json', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end('POST only'); return; }
+        let buf = '';
+        req.on('data', (c) => { buf += c; });
+        req.on('end', async () => {
+          try {
+            const body = JSON.parse(buf || '{}');
+            const path = String(body.path || '');
+            if (!path.startsWith('/')) throw new Error('invalid path');
+            const r = await ghFetch(path, { method: 'GET' });
+            if (!r.ok) { res.statusCode = r.status; res.end(JSON.stringify({ error: 'fetch failed' })); return; }
+            const blob = await r.blob();
+            const { default: JSZip } = await import('jszip');
+            const zip = await JSZip.loadAsync(blob as any);
+            const entry = Object.keys(zip.files).find((k) => k.toLowerCase().endsWith('.json'));
+            if (!entry) { res.statusCode = 404; res.end(JSON.stringify({ error: 'no json in zip' })); return; }
+            const text = await zip.files[entry].async('string');
+            res.setHeader('content-type', 'application/json');
+            res.end(text);
+          } catch (e: any) {
+            res.statusCode = 400; res.end(JSON.stringify({ error: e?.message || 'bad request' }));
+          }
+        });
+      });
+
+      // ---------- RAG TOOLS (dev-only) ----------
+      function sanitizeIndexId(id: string) {
+        if (typeof id !== 'string') return '';
+        const ok = id.match(/^[a-zA-Z0-9_-]{1,64}$/);
+        return ok ? id : '';
+      }
+      function clamp(n: number, min: number, max: number) { return Math.max(min, Math.min(max, n)); }
+      async function readJsonBody(req: any, maxBytes = 2 * 1024 * 1024) {
+        return await new Promise<any>((resolve, reject) => {
+          let size = 0; let buf = '';
+          req.on('data', (c: any) => { size += c.length; if (size > maxBytes) { reject(new Error('payload_too_large')); req.destroy(); return; } buf += c; });
+          req.on('end', () => { try { resolve(JSON.parse(buf || '{}')); } catch { reject(new Error('invalid_json')); } });
+          req.on('error', (e: any) => reject(e));
+        });
+      }
+      // simple dev-only rate limiter for RAG index endpoint
+      const ragBuckets = new Map<string, { tokens: number; last: number }>();
+      const RAG_RPM = 30; const RAG_BURST = 10; const REFILL_MS = 60000 / RAG_RPM;
+      function ragRateOk(key: string) {
+        const now = Date.now();
+        const b = ragBuckets.get(key) || { tokens: RAG_BURST, last: now };
+        const elapsed = now - b.last;
+        const refill = Math.floor(elapsed / REFILL_MS);
+        if (refill > 0) { b.tokens = Math.min(RAG_BURST, b.tokens + refill); b.last = now; }
+        if (b.tokens <= 0) { ragBuckets.set(key, b); return false; }
+        b.tokens -= 1; ragBuckets.set(key, b); return true;
+      }
+
+      async function saveDocsFs(indexId: string, docs: any[]) {
+        const fs = await import('node:fs/promises');
+        const p = await import('node:path');
+        const base = p.join(process.cwd(), '.ff', 'rag', indexId, 'docs');
+        await fs.mkdir(base, { recursive: true });
+        const now = Date.now();
+        for (let i = 0; i < docs.length; i++) {
+          const d = docs[i] || {}; const did = String(d.id || `doc_${now}_${i}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+          const text: string = String(d.text || '').slice(0, 20000); // cap per-doc text
+          const meta = d.meta && typeof d.meta === 'object' ? d.meta : {};
+          const body = JSON.stringify({ id: did, text, meta }, null, 0);
+          await fs.writeFile(p.join(base, `doc-${did}.json`), body);
+        }
+      }
+      async function simpleSearch(indexId: string, query: string, topK = 5) {
+        const fs = await import('node:fs/promises');
+        const p = await import('node:path');
+        const base = p.join(process.cwd(), '.ff', 'rag', indexId, 'docs');
+        let files: string[] = [];
+        try { files = (await fs.readdir(base)).filter(f => f.endsWith('.json')); } catch { return []; }
+        const terms = String(query).toLowerCase().split(/\W+/).filter(Boolean);
+        const hits: any[] = [];
+        for (const f of files) {
+          try {
+            const raw = await fs.readFile(p.join(base, f), 'utf8');
+            const doc = JSON.parse(raw);
+            const text = String(doc.text || '').toLowerCase();
+            let score = 0; for (const t of terms) { const m = text.split(t).length - 1; score += m; }
+            if (score > 0) hits.push({ id: doc.id, text: String(doc.text || '').slice(0, 500), score, meta: doc.meta || {} });
+          } catch { /* ignore */ }
+        }
+        hits.sort((a, b) => b.score - a.score);
+        return hits.slice(0, clamp(topK, 1, 50));
+      }
+
+      server.middlewares.use('/api/tools/rag/index', async (req, res) => {
+        try {
+          if (req.method !== 'POST') { res.statusCode = 405; res.end('POST only'); return; }
+          const key = (req.headers['x-forwarded-for'] as string) || (req.socket as any)?.remoteAddress || 'anon';
+          if (!ragRateOk(String(key))) { res.setHeader('Retry-After','5'); res.statusCode = 429; res.end(JSON.stringify({ ok:false, error:'rate_limited' })); return; }
+          const body = await readJsonBody(req);
+          const indexId = sanitizeIndexId(body?.indexId || '');
+          const docs = Array.isArray(body?.docs) ? body.docs : [];
+          if (!indexId || !docs) { res.statusCode = 400; res.end(JSON.stringify({ ok:false, error:'bad_args' })); return; }
+          // basic total size guard
+          const totalChars = docs.reduce((n: number, d: any) => n + String(d?.text || '').length, 0);
+          if (totalChars > 2 * 1024 * 1024) { res.statusCode = 413; res.end(JSON.stringify({ ok:false, error:'payload_too_large' })); return; }
+          await saveDocsFs(indexId, docs);
+          res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ ok:true, indexed: docs.length, indexId }));
+        } catch (e: any) { res.statusCode = 400; res.end(JSON.stringify({ ok:false, error: e?.message || 'bad_request' })); }
+      });
+
+      server.middlewares.use('/api/tools/rag/search', async (req, res) => {
+        try {
+          if (req.method !== 'POST') { res.statusCode = 405; res.end('POST only'); return; }
+          const body = await readJsonBody(req);
+          const indexId = sanitizeIndexId(body?.indexId || '');
+          const query = String(body?.query || '');
+          const topK = clamp(Number(body?.topK || 5), 1, 50);
+          if (!indexId || !query) { res.statusCode = 400; res.end(JSON.stringify({ ok:false, error:'bad_args' })); return; }
+          const hits = await simpleSearch(indexId, query, topK);
+          res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ ok:true, hits }));
+        } catch (e: any) { res.statusCode = 400; res.end(JSON.stringify({ ok:false, error: e?.message || 'bad_request' })); }
+      });
     }
   }
 });
