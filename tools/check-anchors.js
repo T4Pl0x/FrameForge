@@ -32,6 +32,12 @@ function getDefaultBranch() {
 }
 
 function collectChangedFiles() {
+  // If repo has 0 or 1 commits, skip diff-based checks
+  const commitCountStr = tryCmd('git rev-list --count HEAD');
+  const commitCount = parseInt(commitCountStr || '0', 10);
+  if (!Number.isFinite(commitCount) || commitCount <= 1) {
+    return [];
+  }
   // Strategy 1: last commit diff (works on typical pushes)
   let out = tryCmd('git diff --name-only --no-renames --diff-filter=AM HEAD~1..HEAD');
   if (out) return out.split('\n').filter(Boolean);
