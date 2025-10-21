@@ -10,13 +10,6 @@ on:
       - '.github/workflows/spec-validate.yml'
   workflow_dispatch:
   push:
-    paths:
-      - 'spec/**'
-      - 'schemas/**'
-      - 'shared/schema/**'
-      - 'frameforge/scripts/**'
-      - 'tools/check-anchors.js'
-      - '.github/workflows/spec-validate.yml'
 jobs:
   validate:
     runs-on: ubuntu-latest
