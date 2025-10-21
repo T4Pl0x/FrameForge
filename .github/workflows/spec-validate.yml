@@ -7,13 +7,13 @@ on:
   push:
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
 jobs:
   validate:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: read
     concurrency:
       group: spec-validate-${{ github.ref }}
       cancel-in-progress: true
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: read
     concurrency:
       group: manifests-validate-${{ github.ref }}
       cancel-in-progress: true
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: read
     concurrency:
       group: proposals-validate-${{ github.ref }}
       cancel-in-progress: true
@@ -118,7 +118,7 @@ jobs:
     if: ${{ always() }}
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: read
     steps:
       - name: Evaluate job results
         run: |
