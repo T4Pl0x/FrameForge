@@ -4,6 +4,11 @@ on:
     types: [opened, synchronize, reopened]
     # run on all PRs to catch cross-file coupling
   workflow_dispatch:
+    inputs:
+      force_all:
+        description: "Run all checks even if no relevant changes"
+        required: false
+        default: "false"
   push:
 permissions:
   contents: read
@@ -74,10 +79,10 @@ jobs:
               - 'agents/**'
               - 'scripts/validate-manifests.mjs'
       - name: Validate manifests
-        if: steps.filter.outputs.agents == 'true'
+        if: steps.filter.outputs.agents == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_all == 'true')
         run: node scripts/validate-manifests.mjs
       - name: Skip manifests (no relevant changes)
-        if: steps.filter.outputs.agents != 'true'
+        if: steps.filter.outputs.agents != 'true' && !(github.event_name == 'workflow_dispatch' && github.event.inputs.force_all == 'true')
         run: echo "No agents/* or manifest validator changes; skipping."
   proposals:
     runs-on: ubuntu-latest
@@ -106,10 +111,10 @@ jobs:
               - 'frameforge/reports/proposals/**'
               - 'scripts/validate-proposals.mjs'
       - name: Validate proposals
-        if: steps.filter.outputs.proposals == 'true'
+        if: steps.filter.outputs.proposals == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_all == 'true')
         run: node scripts/validate-proposals.mjs
       - name: Skip proposals (no relevant changes)
-        if: steps.filter.outputs.proposals != 'true'
+        if: steps.filter.outputs.proposals != 'true' && !(github.event_name == 'workflow_dispatch' && github.event.inputs.force_all == 'true')
         run: echo "No proposals/* or validator changes; skipping."
   suite:
     name: suite
