@@ -33,3 +33,41 @@ jobs:
         run: npm run validate:spec
       - name: Check generated anchors
         run: node tools/check-anchors.js
+  manifests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: manifests-validate-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate manifests
+        run: node scripts/validate-manifests.mjs
+  proposals:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: proposals-validate-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate proposals
+        run: node scripts/validate-proposals.mjs
