@@ -33,6 +33,15 @@ jobs:
         run: npm run validate:spec
       - name: Check generated anchors
         run: node tools/check-anchors.js
+      - name: Write summary
+        run: |
+          {
+            echo "## Spec Validate"
+            echo "- Runner: $RUNNER_NAME"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Event: $GITHUB_EVENT_NAME"
+            echo "- Result: success"
+          } >> "$GITHUB_STEP_SUMMARY"
   manifests:
     runs-on: ubuntu-latest
     permissions:
@@ -50,8 +59,20 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            agents:
+              - 'agents/**'
+              - 'scripts/validate-manifests.mjs'
       - name: Validate manifests
+        if: steps.filter.outputs.agents == 'true'
         run: node scripts/validate-manifests.mjs
+      - name: Skip manifests (no relevant changes)
+        if: steps.filter.outputs.agents != 'true'
+        run: echo "No agents/* or manifest validator changes; skipping."
   proposals:
     runs-on: ubuntu-latest
     permissions:
@@ -69,5 +90,39 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            proposals:
+              - 'frameforge/reports/proposals/**'
+              - 'scripts/validate-proposals.mjs'
       - name: Validate proposals
+        if: steps.filter.outputs.proposals == 'true'
         run: node scripts/validate-proposals.mjs
+      - name: Skip proposals (no relevant changes)
+        if: steps.filter.outputs.proposals != 'true'
+        run: echo "No proposals/* or validator changes; skipping."
+  suite:
+    name: suite
+    runs-on: ubuntu-latest
+    needs: [validate, manifests, proposals]
+    if: ${{ always() }}
+    steps:
+      - name: Evaluate job results
+        run: |
+          v='${{ needs.validate.result }}'
+          m='${{ needs.manifests.result }}'
+          p='${{ needs.proposals.result }}'
+          echo "validate=$v manifests=$m proposals=$p"
+          if [ "$v" != "success" ] || [ "$m" != "success" ] || [ "$p" != "success" ]; then
+            echo "One or more checks failed"
+            exit 1
+          fi
+      - name: Summary
+        run: |
+          {
+            echo "## Spec Validate Suite"
+            echo "All required checks passed."
+          } >> "$GITHUB_STEP_SUMMARY"
