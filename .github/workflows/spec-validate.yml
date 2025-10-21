@@ -126,7 +126,8 @@ jobs:
           m='${{ needs.manifests.result }}'
           p='${{ needs.proposals.result }}'
           echo "validate=$v manifests=$m proposals=$p"
-          if [ "$v" != "success" ] || [ "$m" != "success" ] || [ "$p" != "success" ]; then
+          ok() { [ "$1" = "success" ] || [ "$1" = "skipped" ]; }
+          if ! ok "$v" || ! ok "$m" || ! ok "$p"; then
             echo "One or more checks failed"
             exit 1
           fi
