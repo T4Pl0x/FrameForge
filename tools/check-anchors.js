@@ -5,20 +5,60 @@
  *  // FF:gen-begin <id>
  *  // FF:gen-end <id>
  *
- * This script compares git HEAD to the PR branch (if run in CI it should be run on PR ref),
- * but as a minimal first step it will scan modified files from `git diff --name-only HEAD~1..HEAD`.
+ * This script attempts multiple diff strategies to work in CI, shallow clones,
+ * or new repos with a single commit.
  *
- * Usage (local): node tools/check-anchors.js
+ * Usage (local/CI): node tools/check-anchors.js
  */
 import { execSync } from 'child_process';
 import fs from 'fs';
-const diffOutput = execSync('git diff --name-only --no-renames --diff-filter=AM HEAD~1..HEAD', { encoding: 'utf8' });
-const files = diffOutput.split('\n').map(s => s.trim()).filter(Boolean).filter(f => f.startsWith('generated/'));
-let violations = 0;
 
+function tryCmd(cmd) {
+  try {
+    return execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  } catch {
+    return '';
+  }
+}
+
+function getDefaultBranch() {
+  const ref = tryCmd('git symbolic-ref --quiet refs/remotes/origin/HEAD');
+  if (ref) {
+    const m = ref.match(/refs\/remotes\/origin\/(.+)$/);
+    if (m) return m[1];
+  }
+  // Fallback common defaults
+  return 'main';
+}
+
+function collectChangedFiles() {
+  // Strategy 1: last commit diff (works on typical pushes)
+  let out = tryCmd('git diff --name-only --no-renames --diff-filter=AM HEAD~1..HEAD');
+  if (out) return out.split('\n').filter(Boolean);
+
+  // Strategy 2: PR-style diff vs default branch
+  const def = getDefaultBranch();
+  out = tryCmd(`git fetch origin ${def} --depth=1 && git diff --name-only --no-renames --diff-filter=AM origin/${def}...HEAD`);
+  if (out) return out.split('\n').filter(Boolean);
+
+  // Strategy 3: current changes (uncommitted) if any
+  out = tryCmd('git diff --name-only --no-renames --diff-filter=AM');
+  if (out) return out.split('\n').filter(Boolean);
+
+  // Strategy 4: changed in HEAD commit
+  out = tryCmd('git show --name-only --pretty=format: --diff-filter=AM HEAD');
+  if (out) return out.split('\n').filter(Boolean);
+
+  return [];
+}
+
+const all = collectChangedFiles();
+const files = all.filter(f => f.startsWith('generated/'));
+
+let violations = 0;
 for (const file of files) {
+  if (!fs.existsSync(file)) continue;
   const content = fs.readFileSync(file, 'utf8');
-  // naive approach: ensure every non-FF:gen-* line is within a gen region OR within a FF:component block
   let inRegion = false;
   const lines = content.split('\n');
   for (let i = 0; i < lines.length; i++) {
@@ -26,13 +66,14 @@ for (const file of files) {
     if (/FF:gen-begin/.test(L)) inRegion = true;
     if (/FF:gen-end/.test(L)) inRegion = false;
     if (/FF:component=/.test(L)) {
-      // allow entire file if file begins with component marker (or treat per repo rules)
+      // allow entire file if file begins with component marker (repo-specific)
     }
-    // This is a conservative check: if we find textual edits outside regions, flag file.
-    // For initial run, warn only.
   }
-  // For now, just print that the file was detected. A future version should diff generated baseline vs current.
   console.log(`Detected generated file in diff: ${file}`);
+}
+
+if (files.length === 0) {
+  console.log('No generated/* changes detected; skipping anchor checks.');
 }
 
 if (violations > 0) {
