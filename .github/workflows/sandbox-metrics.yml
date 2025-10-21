@@ -1,0 +1,56 @@
+name: Sandbox Metrics (Preview)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "frameforge/**"
+
+jobs:
+  metrics:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install deps
+        run: |
+          cd frameforge
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Build (dev-exposed)
+        run: |
+          cd frameforge
+          VITE_EXPOSE_DEV=1 npm run build
+      - name: Preview server
+        run: |
+          cd frameforge
+          nohup npx vite preview --port 4173 > preview.log 2>&1 &
+          echo $! > ../preview.pid
+          sleep 2
+          curl -sSf http://localhost:4173/ > /dev/null
+      - name: Run sandbox metrics
+        run: |
+          cd frameforge
+          node scripts/sandbox-metrics.play.js | tee ../stdout.log
+      - name: Capture env
+        run: |
+          echo "git_sha=$(git rev-parse HEAD)"        > env.txt
+          node -v                                   >> env.txt
+          npx playwright --version                  >> env.txt
+          uname -a                                  >> env.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-metrics
+          path: |
+            frameforge/sandbox-metrics.json
+            stdout.log
+            env.txt
+            frameforge/preview.log
+      - name: Kill preview
+        if: always()
+        run: |
+          kill $(cat preview.pid) || true
+
