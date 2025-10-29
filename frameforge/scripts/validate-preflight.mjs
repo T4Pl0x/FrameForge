@@ -2,10 +2,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import Ajv from 'ajv';
+import Ajv from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 
-const schemaPath = path.resolve('frameforge/schemas/preflight.json');
+const schemaPath = path.resolve('schemas/preflight.json');
 const candidates = [
   path.resolve('reports/preflight.json'),
   path.resolve('spec/reports/preflight.json'),
