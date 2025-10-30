@@ -14,12 +14,9 @@ import { useDragAndResize } from './hooks/useDragAndResize.js';
 import Toolbar from './components/Toolbar.jsx';
 import Canvas from './components/Canvas.jsx';
 const WorkflowEditor = React.lazy(() => import('./components/WorkflowEditor.jsx'));
-import LeftPanel from './components/panels/left/LeftPanel.jsx';
-import CenterPanel from './components/panels/center/CenterPanel.jsx';
-import RightPanel from './components/panels/right/RightPanel.jsx';
+import ModelPicker from './components/ModelPicker.jsx';
 import ScreenTabs from './components/ScreenTabs.jsx';
 import GateBadge from './components/GateBadge.jsx';
-import ModelPicker from './components/ModelPicker.jsx';
 import { buildMermaidDefinition } from './utils/mermaid.js';
 import { broker } from './tools/broker.js';
 import { evaluateGates } from './tools/gates/evaluateGates.js';
@@ -186,8 +183,6 @@ export default function App() {
       zoom,
       showGrid,
       snapToGrid,
-      componentMenus,
-      setComponentMenus,
       componentComments,
       setComponentComments,
   centerViewMode,
@@ -917,14 +912,6 @@ export default function App() {
 
     const handleDeleteFrame = (frameId) => {
       removeFrame(frameId);
-      setComponentMenus(prev => {
-        if (!Object.keys(prev).some(key => key.startsWith(`${frameId}-`))) {
-          return prev;
-        }
-        return Object.fromEntries(
-          Object.entries(prev).filter(([key]) => !key.startsWith(`${frameId}-`))
-        );
-      });
       setComponentComments(prev => {
         const next = { ...prev };
         let changed = false;
@@ -946,11 +933,6 @@ export default function App() {
     const handleDeleteComponent = (frameId, nodeId) => {
       removeComponent(frameId, nodeId);
       const componentKey = `${frameId}-${nodeId}`;
-      setComponentMenus(prev => {
-        if (!(componentKey in prev)) return prev;
-        const { [componentKey]: _removed, ...rest } = prev;
-        return rest;
-      });
       setComponentComments(prev => {
         if (!(componentKey in prev)) return prev;
         const { [componentKey]: _removed, ...rest } = prev;
@@ -1394,32 +1376,6 @@ export default function App() {
       });
     };
 
-    const showComponentMenu = (event, frameId, nodeId) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const rect = event.currentTarget.getBoundingClientRect();
-      setComponentMenus(prev => ({
-        ...prev,
-        [`${frameId}-${nodeId}`]: {
-          frameId,
-          nodeId,
-          x: rect.right + 10,
-          y: rect.top,
-          isOpen: true,
-        },
-      }));
-    };
-
-    const closeComponentMenu = (frameId, nodeId) => {
-      setComponentMenus(prev => ({
-        ...prev,
-        [`${frameId}-${nodeId}`]: {
-          ...prev[`${frameId}-${nodeId}`],
-          isOpen: false,
-        },
-      }));
-    };
-
     const addComponentComment = (frameId, nodeId, comment) => {
       const commentKey = `${frameId}-${nodeId}`;
       setComponentComments(prev => ({
@@ -1512,124 +1468,509 @@ export default function App() {
           </div>
         </header>
         <div className="app">
-        <LeftPanel
-          chatPanelMode={chatPanelMode}
-          chatPanelTitle={chatPanelTitle}
-          chatPanelSubtitle={chatPanelSubtitle}
-          isChatSettingsMode={isChatSettingsMode}
-          handleToggleChatSettings={handleToggleChatSettings}
-          chatSettingsButtonIcon={chatSettingsButtonIcon}
-          chatSettingsButtonLabel={chatSettingsButtonLabel}
-          apiKey={apiKey}
-          handleApiKeyInputChange={handleApiKeyInputChange}
-          availableModels={availableModels}
-          selectedModel={selectedModel}
-          handleChatLLMConfigChange={handleChatLLMConfigChange}
-          isFetchingModels={isFetchingModels}
-          handleRefreshModels={handleRefreshModels}
-          modelsError={modelsError}
-          modelsUpdatedAt={modelsUpdatedAt}
-          recommendedModel={recommendedModel}
-          chatLLMConfig={chatLLMConfig}
-          chatPolicies={chatPolicies}
-          handleChatPoliciesChange={handleChatPoliciesChange}
-          agentWorkflowRules={agentWorkflowRules}
-          handleAgentWorkflowRulesChange={handleAgentWorkflowRulesChange}
-          uiHintsEnabled={state.uiHintsEnabled}
-          setUiHintsEnabled={state.setUiHintsEnabled}
-          chatHistoryRef={chatHistoryRef}
-          chatMessages={chatMessages}
-          formatTimestamp={formatTimestamp}
-          isChatGenerating={isChatGenerating}
-          chatInputRef={chatInputRef}
-          chatInput={chatInput}
-          setChatInput={setChatInput}
-          handleChatKeyDown={handleChatKeyDown}
-          handleSendMessage={handleSendMessage}
-          chatError={chatError}
-          state={state}
-        />
+        <div className="panel left">
+          <div className="panel-header">
+            <div>
+              <h4>{chatPanelTitle}</h4>
+              <p className="panel-subtitle">{chatPanelSubtitle}</p>
+            </div>
+            <div className="panel-header-actions">
+              <span className="status-dot">● online</span>
+            <button
+              type="button"
+              className={`panel-icon-button${isChatSettingsMode ? ' panel-icon-button--active' : ''}`}
+              onClick={handleToggleChatSettings}
+              aria-pressed={isChatSettingsMode}
+              aria-label={state.uiHintsEnabled ? chatSettingsButtonLabel : undefined}
+              title={state.uiHintsEnabled ? chatSettingsButtonLabel : undefined}
+            >
+              {chatSettingsButtonIcon}
+            </button>
+            </div>
+          </div>
+          <div className="chat-panel">
+            {isChatSettingsMode ? (
+              <div className="chat-settings">
+                <section className="chat-settings__section">
+                  <header>
+                    <h5>LLM Configuration</h5>
+                    <p>Choose the provider, model, and generation parameters for the assistant.</p>
+                  </header>
+                  <label className="chat-settings__field chat-settings__field--stack">
+                    <span>OpenRouter API Key</span>
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(event) => handleApiKeyInputChange(event.target.value)}
+                      placeholder="sk-or-v1-..."
+                      autoComplete="off"
+                    />
+                    <small className="chat-settings__hint">Stored locally in this browser. Create keys at openrouter.ai.</small>
+                  </label>
+                  <div className="chat-settings__grid">
+                    <label className="chat-settings__field">
+                      <span>Provider</span>
+                      <input type="text" value="OpenRouter" readOnly />
+                    </label>
+                    <label className="chat-settings__field">
+                      <span>Model</span>
+                      <div className="chat-settings__model-row">
+                        <ModelPicker
+                          models={availableModels}
+                          value={selectedModel}
+                          onChange={(modelId) => handleChatLLMConfigChange('model', modelId)}
+                          isLoading={isFetchingModels}
+                          onRefresh={handleRefreshModels}
+                          error={modelsError}
+                          updatedAt={modelsUpdatedAt}
+                          recommendedModel={recommendedModel}
+                        />
+                      </div>
+                      {!modelsError && recommendedModel && (
+                        <small className="chat-settings__hint">Suggested starter: {recommendedModel.name}</small>
+                      )}
+                      {modelsError && (
+                        <small className="chat-settings__hint chat-settings__hint--error">{modelsError}</small>
+                      )}
+                    </label>
+                    <label className="chat-settings__field">
+                      <span>Temperature</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="2"
+                        step="0.1"
+                        value={chatLLMConfig.temperature}
+                        onChange={(event) => handleChatLLMConfigChange('temperature', event.target.value)}
+                      />
+                    </label>
+                    <label className="chat-settings__field">
+                      <span>Max Tokens</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={chatLLMConfig.maxTokens}
+                        onChange={(event) => handleChatLLMConfigChange('maxTokens', event.target.value)}
+                      />
+                    </label>
+                  </div>
+                </section>
 
-        <CenterPanel
-          screens={screens}
-          activeScreenId={activeScreenId}
-          setActiveScreenId={setActiveScreenId}
-          setDoc={setDoc}
-          uiHintsEnabled={state.uiHintsEnabled}
-          onAddFrame={handleAddFrame}
-          onAnalyzeDesign={handleAnalyzeDesign}
-          onApplyEdits={handleApplyEdits}
-          onExport={exportDoc}
-          onImport={importDoc}
-          onShowAIPanel={handleFocusChat}
-          onShowAdvancedPanel={handleFocusTasks}
-          selectedFrame={selectedFrame}
-          centerViewMode={centerViewMode}
-          handleCenterViewChange={handleCenterViewChange}
-          canvasRef={canvasRef}
-          framesForActiveScreen={framesForActiveScreen}
-          selectedFrameId={selectedFrameId}
-          selectedNodeId={selectedNodeId}
-          showGrid={showGrid}
-          zoom={zoom}
-          handleCanvasClick={handleCanvasClick}
-          handleFrameMouseDown={handleFrameMouseDown}
-          handleResizeMouseDown={handleResizeMouseDown}
-          handleComponentDrag={handleComponentDrag}
-          showMenu={showMenu}
-          updateFrame={updateFrame}
-          updateNode={updateNode}
-          showComponentMenu={showComponentMenu}
-          handleCreateScreen={handleCreateScreen}
-          handleCreateModalFrame={handleCreateModalFrame}
-          componentMenus={componentMenus}
-          getComponent={getComponent}
-          closeComponentMenu={closeComponentMenu}
-          addComponentComment={addComponentComment}
-          getComponentComments={getComponentComments}
-          frameTitleOptions={frameTitleOptions}
-          handleSelectFrameTitle={handleSelectFrameTitle}
-          handleAddFrameTitleOption={handleAddFrameTitleOption}
-          handleDeleteFrame={handleDeleteFrame}
-          handleDeleteComponent={handleDeleteComponent}
-          addToChat={addToChat}
-          setChatPanelMode={setChatPanelMode}
-          doc={doc}
-          state={state}
-        />
+                <section className="chat-settings__section">
+                  <header>
+                    <h5>AI Rules &amp; Policies</h5>
+                    <p>Define the guardrails the assistant must follow in every response.</p>
+                  </header>
+                  <textarea
+                    value={chatPolicies}
+                    onChange={(event) => handleChatPoliciesChange(event.target.value)}
+                    placeholder="Outline the acceptable guidance, tone, and compliance requirements."
+                  />
+                </section>
 
-        <RightPanel
-          tasksHeaderRef={tasksHeaderRef}
-          completedTasks={completedTasks}
-          totalTasks={totalTasks}
-          inProgressTasks={inProgressTasks}
-          handleAnalyzeDesign={handleAnalyzeDesign}
-          preflight={preflight}
-          publishStatus={publishStatus}
-          gates={gates}
-          gatesMeta={gatesMeta}
-          overrideState={overrideState}
-          setOverrideState={setOverrideState}
-          isOwner={isOwner}
-          appendAudit={appendAudit}
-          publishInfo={publishInfo}
-          refactorAutomation={refactorAutomation}
-          handleAutomationToggle={handleAutomationToggle}
-          showAutomationSettings={showAutomationSettings}
-          setShowAutomationSettings={setShowAutomationSettings}
-          isAutomationConfigured={isAutomationConfigured}
-          automationStatus={automationStatus}
-          handleAutomationStringChange={handleAutomationStringChange}
-          handleAutomationHotspotChange={handleAutomationHotspotChange}
-          handleAutomationCheckboxChange={handleAutomationCheckboxChange}
-          handleAutomationResetToken={handleAutomationResetToken}
-          taskInput={taskInput}
-          setTaskInput={setTaskInput}
-          handleAddTask={handleAddTask}
-          tasks={tasks}
-          handleToggleTask={handleToggleTask}
-          handleDeleteTask={handleDeleteTask}
-        />
+                <section className="chat-settings__section">
+                  <header>
+                    <h5>Agent Workflow Instructions</h5>
+                    <p>Set the multi-step workflow or escalation rules for the assistant.</p>
+                  </header>
+                  <textarea
+                    value={agentWorkflowRules}
+                    onChange={(event) => handleAgentWorkflowRulesChange(event.target.value)}
+                    placeholder="Describe how the agent should break down tasks, hand off actions, or request clarification."
+                  />
+                </section>
+
+                <section className="chat-settings__section">
+                  <header>
+                    <h5>UI Settings</h5>
+                    <p>Toggle helper hints like tooltips and aria labels.</p>
+                  </header>
+                  <label className="chat-settings__field">
+                    <input
+                      type="checkbox"
+                      checked={state.uiHintsEnabled}
+                      onChange={(e) => state.setUiHintsEnabled(e.target.checked)}
+                    />
+                    <span style={{ marginLeft: 8 }}>Show hints/tooltips</span>
+                  </label>
+                </section>
+              </div>
+            ) : (
+              <>
+                <div ref={chatHistoryRef} className="chat-history">
+                  {chatMessages.map(message => (
+                    <div key={message.id} className={`chat-message chat-message--${message.role}`}>
+                      <div className="chat-message__meta">
+                        <span className="chat-message__author">{message.role === 'assistant' ? 'FrameForge Copilot' : 'You'}</span>
+                        <span className="chat-message__time">{formatTimestamp(message.timestamp)}</span>
+                      </div>
+                      <p>{message.content}</p>
+                    </div>
+                  ))}
+                  {isChatGenerating && (
+                    <div className="chat-message chat-message--assistant chat-message--pending">
+                      <div className="chat-message__meta">
+                        <span className="chat-message__author">FrameForge Copilot</span>
+                        <span className="chat-message__time">{formatTimestamp(new Date().toISOString())}</span>
+                      </div>
+                      <p>Thinking through your layout…</p>
+                    </div>
+                  )}
+                  {chatMessages.length === 0 && (
+                    <div className="chat-empty">Start a conversation to get tailored guidance.</div>
+                  )}
+                </div>
+                <div className="chat-composer">
+                  <textarea
+                    ref={chatInputRef}
+                    value={chatInput}
+                    onChange={(event) => setChatInput(event.target.value)}
+                    onKeyDown={handleChatKeyDown}
+                    placeholder="Ask anything about your interface..."
+                    aria-busy={isChatGenerating}
+                  />
+                  <div className="chat-actions">
+                    <button
+                      type="button"
+                      onClick={handleSendMessage}
+                      disabled={!chatInput.trim() || isChatGenerating}
+                    >
+                      Send
+                    </button>
+                  </div>
+                  {chatError && (
+                    <div className="chat-error" role="status" aria-live="polite">
+                      {chatError}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+        </div>
+      </div>
+
+      <div className="panel center">
+          <ScreenTabs screens={screens} activeScreenId={activeScreenId} setActiveScreenId={setActiveScreenId} setDoc={setDoc} uiHintsEnabled={state.uiHintsEnabled} />
+          <Toolbar
+            onAddFrame={handleAddFrame}
+            onAnalyzeDesign={handleAnalyzeDesign}
+            onApplyEdits={handleApplyEdits}
+            onExport={exportDoc}
+            onImport={importDoc}
+            onShowAIPanel={handleFocusChat}
+            onShowAdvancedPanel={handleFocusTasks}
+            selectedFrame={selectedFrame}
+            viewMode={centerViewMode}
+            onChangeView={handleCenterViewChange}
+          />
+
+          {centerViewMode === 'design' ? (
+            <Canvas
+              canvasRef={canvasRef}
+              frames={framesForActiveScreen}
+              screens={screens}
+              selectedFrameId={selectedFrameId}
+              selectedNodeId={selectedNodeId}
+              showGrid={showGrid}
+              zoom={zoom}
+              onCanvasClick={handleCanvasClick}
+              onFrameMouseDown={handleFrameMouseDown}
+              onResizeMouseDown={handleResizeMouseDown}
+              onComponentMouseDown={handleComponentDrag}
+              onShowMenu={showMenu}
+              onUpdateFrame={updateFrame}
+              onUpdateNode={updateNode}
+              onCreateScreen={handleCreateScreen}
+              onCreateModalFrame={handleCreateModalFrame}
+              getComponent={getComponent}
+              addComponentComment={addComponentComment}
+              getComponentComments={getComponentComments}
+              frameTitleOptions={frameTitleOptions}
+              onSelectFrameTitle={handleSelectFrameTitle}
+              onAddFrameTitleOption={handleAddFrameTitleOption}
+              onDeleteFrame={handleDeleteFrame}
+              onDeleteComponent={handleDeleteComponent}
+              uiHintsEnabled={state.uiHintsEnabled}
+              onAskCopilot={(frameId, nodeId) => {
+                const frame = doc.frames.find(f => f.id === frameId);
+                const node = frame?.nodes?.find(n => n.id === nodeId);
+                const outbound = (frame?.nodes || [])
+                  .map(n => n?.props?.navigateTo)
+                  .filter(Boolean)
+                  .map(n => `${n.type}:${n.targetId || ''}:${n.label || ''}`);
+                const context = {
+                  frame: frame ? { id: frame.id, title: frame.title, screenId: frame.screenId } : null,
+                  node: node ? { id: node.id, type: node.type, props: node.props } : null,
+                  outbound,
+                };
+                addToChat('user', `Ask Copilot about this component. Context:\n${JSON.stringify(context, null, 2)}`);
+                setChatPanelMode('chat');
+              }}
+            />
+          ) : (
+            <Suspense fallback={<div className="panel-loading">Loading diagram workspace…</div>}>
+              <WorkflowEditor backendGraph={state.backendGraph} onChange={state.setBackendGraph} />
+            </Suspense>
+          )}
+        </div>
+
+        <div className="panel right">
+          <div className="panel-header" ref={tasksHeaderRef}>
+            <div>
+              <h4>Task List</h4>
+              <p className="panel-subtitle">{completedTasks}/{totalTasks} done · {inProgressTasks} in progress</p>
+            </div>
+            <button type="button" className="panel-secondary" onClick={handleAnalyzeDesign}>
+              Sync
+            </button>
+          </div>
+          <div className="task-panel">
+          <div className="task-automation">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+              <span className="preflight-badge" style={{ fontSize: 12, padding: '2px 6px', borderRadius: 4, background: preflight?.overallPass ? '#DCFCE7' : '#FEE2E2', color: preflight?.overallPass ? '#065F46' : '#991B1B' }}>
+                Preflight: {preflight?.overallPass ? 'Pass' : 'Needs fixes'}
+              </span>
+              {publishStatus && (
+                <span className="publish-badge" style={{ fontSize: 12, padding: '2px 6px', borderRadius: 4, background: '#EFF6FF', color: '#1E40AF' }}>
+                  Publish: {publishStatus}
+                </span>
+              )}
+            </div>
+            <div className="publish-gates" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, max-content)', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: 12 }}>Gates:</span>
+              <span style={{ fontSize: 12 }}>preflight: <strong>{gates.preflight}</strong></span>
+              <GateBadge
+                label="Tests"
+                state={gates.tests}
+                tooltip={gatesMeta.tests ? `✓ ${gatesMeta.tests.passed} · ✗ ${gatesMeta.tests.failed} · ~ ${gatesMeta.tests.skipped}` : undefined}
+              />
+              <GateBadge
+                label="A11y"
+                state={gates.a11y}
+                tooltip={gatesMeta.a11y ? `violations: ${gatesMeta.a11y.violations}` : undefined}
+              />
+              <GateBadge
+                label="Lint/Build"
+                state={gates.lintBuild}
+                tooltip={gatesMeta.lintBuild ? `build ${gatesMeta.lintBuild.buildErrors}e/${gatesMeta.lintBuild.buildWarnings}w · lint ${gatesMeta.lintBuild.lintErrors}e/${gatesMeta.lintBuild.lintWarnings}w` : undefined}
+              />
+            </div>
+            {(!(gates.preflight === 'pass' && gates.tests === 'pass' && gates.a11y === 'pass' && gates.lintBuild === 'pass' && gates.risk === 'low')) && (
+              <div style={{ fontSize: 12, color: '#991B1B', background: '#FEF2F2', border: '1px solid #FECACA', padding: 8, borderRadius: 6, marginBottom: 8 }}>
+                PR blocked. Resolve failing gates or request an owner override with reason.
+              </div>
+            )}
+            <div className="publish-override" style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong>Override</strong>
+                <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input type="checkbox" checked={overrideState.enabled} disabled={!isOwner} onChange={(e) => {
+                    const enabled = e.target.checked;
+                    const ts = new Date().toISOString();
+                    setOverrideState((prev) => ({ ...prev, enabled, timestamp: ts }));
+                    if (enabled) {
+                      const failing = ['preflight','tests','a11y','lintBuild'].filter((k) => (gates?.[k] !== 'pass'));
+                      if ((gates?.risk || 'low') !== 'low') failing.push('risk');
+                      appendAudit('override.enabled', { failingGates: failing });
+                    }
+                  }} />
+                  <span style={{ fontSize: 12 }}>{isOwner ? 'Owner' : 'Owner required'}</span>
+                </label>
+              </div>
+              {overrideState.enabled && (
+                <>
+                  <div style={{ marginTop: 6 }}>
+                    <label style={{ display: 'grid', gap: 4 }}>
+                      <span style={{ fontSize: 12 }}>Reason (min 15 chars)</span>
+                      <textarea value={overrideState.reason} onChange={(e) => setOverrideState((p) => ({ ...p, reason: e.target.value }))} rows={3} />
+                    </label>
+                  </div>
+                  <div style={{ marginTop: 6, display: 'flex', gap: 12 }}>
+                    <label style={{ display: 'grid', gap: 4 }}>
+                      <span style={{ fontSize: 12 }}>Expires</span>
+                      <input type="date" value={overrideState.expires} onChange={(e) => setOverrideState((p) => ({ ...p, expires: e.target.value }))} />
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input type="checkbox" checked={overrideState.accepted} onChange={(e) => setOverrideState((p) => ({ ...p, accepted: e.target.checked }))} />
+                      <span style={{ fontSize: 12 }}>I accept responsibility for this override.</span>
+                    </label>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: 12, color: '#92400E', background: '#FFFBEB', border: '1px solid #FDE68A', padding: 8, borderRadius: 6 }}>
+                    This PR will be tagged override-required and blocked for non-owners.
+                  </div>
+                </>
+              )}
+            </div>
+            {publishInfo && (
+              <div className="publish-card" style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 600 }}>{(publishInfo && publishInfo.pr && publishInfo.pr.title) ? publishInfo.pr.title : `publish: FrameForge UI @ ${publishInfo && publishInfo.versionId ? publishInfo.versionId : ''}`}</div>
+                    <div style={{ fontSize: 12, padding: '2px 6px', borderRadius: 4, background: publishStatus === 'Passed' ? '#DCFCE7' : (publishStatus === 'Failed' ? '#FEE2E2' : '#FEF9C3'), color: publishStatus === 'Passed' ? '#065F46' : (publishStatus === 'Failed' ? '#991B1B' : '#92400E') }}>{publishStatus || 'Queued'}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                    {(publishInfo && publishInfo.pr && publishInfo.pr.url) ? (<a href={publishInfo.pr.url} target="_blank" rel="noreferrer" className="panel-secondary">View PR</a>) : null}
+                    {(publishInfo && publishInfo.run && publishInfo.run.url) ? (<a href={publishInfo.run.url} target="_blank" rel="noreferrer" className="panel-secondary">View Checks</a>) : null}
+                    {publishInfo?.artifacts?.['tests-report.json'] ? (<a href={publishInfo.artifacts['tests-report.json'].url} target="_blank" rel="noreferrer" className="panel-secondary">View Tests</a>) : null}
+                    {publishInfo?.artifacts?.['a11y-report.json'] ? (<a href={publishInfo.artifacts['a11y-report.json'].url} target="_blank" rel="noreferrer" className="panel-secondary">View A11y</a>) : null}
+                    {publishInfo?.artifacts?.['preflight.json'] ? (<a href={publishInfo.artifacts['preflight.json'].url} target="_blank" rel="noreferrer" className="panel-secondary">View Preflight</a>) : null}
+                    {publishInfo?.artifacts?.['lint.json'] ? (<a href={publishInfo.artifacts['lint.json'].url} target="_blank" rel="noreferrer" className="panel-secondary">View Lint</a>) : null}
+                    {publishInfo?.artifacts?.['sbom.json'] ? (<a href={publishInfo.artifacts['sbom.json'].url} target="_blank" rel="noreferrer" className="panel-secondary">View SBOM</a>) : null}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
+                    <div>Preflight snapshot: {preflight ? `${preflight.counts?.blocking || 0} blocking, ${preflight.counts?.major || 0} major, ${Math.max(0, (preflight.counts?.total || 0) - (preflight.counts?.blocking || 0) - (preflight.counts?.major || 0))} minor` : 'n/a'}</div>
+                  </div>
+                </div>
+              )}
+              <div className="task-automation__header">
+                <label className="task-automation__toggle">
+                  <input
+                    type="checkbox"
+                    checked={refactorAutomation.enabled}
+                    onChange={(event) => handleAutomationToggle(event.target.checked)}
+                  />
+                  <span>Auto-run refactor agent when tasks finish</span>
+                </label>
+                <button
+                  type="button"
+                  className="panel-secondary"
+                  onClick={() => setShowAutomationSettings(prev => !prev)}
+                >
+                  {showAutomationSettings ? 'Hide' : 'Configure'}
+                </button>
+              </div>
+              <p className="task-automation__hint">
+                {isAutomationConfigured
+                  ? 'Configured. I’ll dispatch the GitHub workflow each time a task is marked done.'
+                  : 'Provide your GitHub workflow details so I can kick off the refactor agent automatically.'}
+              </p>
+              {automationStatus && (
+                <p className="task-automation__status">{automationStatus}</p>
+              )}
+              {showAutomationSettings && (
+                <div className="task-automation__form">
+                  <label>
+                    <span>Repository owner</span>
+                    <input
+                      type="text"
+                      placeholder="acme-corp"
+                      value={refactorAutomation.repoOwner}
+                      onChange={handleAutomationStringChange('repoOwner')}
+                    />
+                  </label>
+                  <label>
+                    <span>Repository name</span>
+                    <input
+                      type="text"
+                      placeholder="frameforge"
+                      value={refactorAutomation.repoName}
+                      onChange={handleAutomationStringChange('repoName')}
+                    />
+                  </label>
+                  <label>
+                    <span>Workflow file</span>
+                    <input
+                      type="text"
+                      placeholder="copilot-refactor.yml"
+                      value={refactorAutomation.workflowId}
+                      onChange={handleAutomationStringChange('workflowId')}
+                    />
+                  </label>
+                  <label>
+                    <span>Target branch</span>
+                    <input
+                      type="text"
+                      placeholder="main"
+                      value={refactorAutomation.branch}
+                      onChange={handleAutomationStringChange('branch')}
+                    />
+                  </label>
+                  <label>
+                    <span>Hotspot threshold</span>
+                    <input
+                      type="number"
+                      min="50"
+                      step="10"
+                      value={refactorAutomation.hotspotThreshold}
+                      onChange={handleAutomationHotspotChange}
+                    />
+                  </label>
+                  <label className="task-automation__checkbox">
+                    <input
+                      type="checkbox"
+                      checked={refactorAutomation.dryRun}
+                      onChange={handleAutomationCheckboxChange('dryRun')}
+                    />
+                    <span>Run in dry-run mode (analysis only)</span>
+                  </label>
+                  <label className="task-automation__checkbox">
+                    <input
+                      type="checkbox"
+                      checked={refactorAutomation.apply}
+                      onChange={handleAutomationCheckboxChange('apply')}
+                    />
+                    <span>Emit JSON reports (requires `--apply`)</span>
+                  </label>
+                  <label>
+                    <span>GitHub token (workflow dispatch scope)</span>
+                    <input
+                      type="password"
+                      value={refactorAutomation.token}
+                      onChange={handleAutomationStringChange('token')}
+                      placeholder="ghp_..."
+                      autoComplete="off"
+                    />
+                  </label>
+                  <div className="task-automation__actions">
+                    <button type="button" className="panel-secondary" onClick={handleAutomationResetToken}>
+                      Clear token
+                    </button>
+                    <span>Token is stored locally in your browser. Use a PAT with <code>workflow</code> scope.</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="task-create">
+              <input
+                type="text"
+                value={taskInput}
+                onChange={(event) => setTaskInput(event.target.value)}
+                placeholder="Capture a new to-do"
+              />
+              <button type="button" onClick={handleAddTask} disabled={!taskInput.trim()}>
+                Add
+              </button>
+            </div>
+            <div className="task-list">
+              {tasks.length === 0 && (
+                <div className="task-empty">No tasks yet. Ask the chat for suggestions or add one manually.</div>
+              )}
+              {tasks.map(task => (
+                <div key={task.id} className={`task-item task-item--${task.status}`}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={task.status === 'done'}
+                      onChange={() => handleToggleTask(task.id)}
+                    />
+                    <div>
+                      <span className="task-title">{task.title}</span>
+                      <span className="task-meta">{task.category || 'General'} · {task.status.replace('-', ' ')}</span>
+                    </div>
+                  </label>
+                  <div className="task-actions">
+                    <button type="button" onClick={() => handleToggleTask(task.id)} title="Advance status">
+                      ↻
+                    </button>
+                    <button type="button" onClick={() => handleDeleteTask(task.id)} title="Remove task">
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {menu && (
           <div

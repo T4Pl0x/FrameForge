@@ -19,13 +19,10 @@ const Canvas = ({
   onShowMenu,
   onUpdateFrame,
   onUpdateNode,
-  onShowComponentMenu,
   screens,
   onCreateScreen,
   onCreateModalFrame,
-  componentMenus,
   getComponent,
-  closeComponentMenu,
   addComponentComment,
   getComponentComments,
   frameTitleOptions,
@@ -82,13 +79,10 @@ const Canvas = ({
           onShowMenu={onShowMenu}
           onUpdateFrame={onUpdateFrame}
           onUpdateNode={onUpdateNode}
-          onShowComponentMenu={onShowComponentMenu}
           screens={screens}
           onCreateScreen={onCreateScreen}
           onCreateModalFrame={onCreateModalFrame}
-          componentMenus={componentMenus}
           getComponent={getComponent}
-          closeComponentMenu={closeComponentMenu}
           addComponentComment={addComponentComment}
           getComponentComments={getComponentComments}
           frameTitleOptions={frameTitleOptions}
@@ -121,13 +115,10 @@ Canvas.propTypes = {
   onShowMenu: PropTypes.func.isRequired,
   onUpdateFrame: PropTypes.func,
   onUpdateNode: PropTypes.func.isRequired,
-  onShowComponentMenu: PropTypes.func.isRequired,
   screens: PropTypes.array,
   onCreateScreen: PropTypes.func,
   onCreateModalFrame: PropTypes.func,
-  componentMenus: PropTypes.object.isRequired,
   getComponent: PropTypes.func.isRequired,
-  closeComponentMenu: PropTypes.func.isRequired,
   addComponentComment: PropTypes.func.isRequired,
   getComponentComments: PropTypes.func.isRequired,
   frameTitleOptions: PropTypes.arrayOf(PropTypes.string).isRequired,

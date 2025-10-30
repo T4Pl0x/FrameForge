@@ -19,13 +19,10 @@ const Frame = ({
   onShowMenu,
   onUpdateFrame,
   onUpdateNode,
-  onShowComponentMenu,
   screens,
   onCreateScreen,
   onCreateModalFrame,
-  componentMenus,
   getComponent,
-  closeComponentMenu,
   addComponentComment,
   getComponentComments,
   frameTitleOptions,
@@ -41,6 +38,22 @@ const Frame = ({
   const [customTitleValue, setCustomTitleValue] = useState('');
   const customTitleInputRef = useRef(null);
   const [showInspector, setShowInspector] = useState(false);
+  const [activeComponentMenu, setActiveComponentMenu] = useState(null);
+
+  const showComponentMenu = (event, nodeId) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    setActiveComponentMenu({
+      nodeId,
+      x: rect.right + 10,
+      y: rect.top,
+    });
+  };
+
+  const closeComponentMenu = () => {
+    setActiveComponentMenu(null);
+  };
 
   const fallbackTitle = frame.title || 'Untitled Frame';
 
@@ -102,7 +115,7 @@ const Frame = ({
       <div className="component-menu">
         <div className="component-menu__header">
           <span>Component Tools</span>
-          <button type="button" onClick={() => closeComponentMenu(frame.id, node.id)}>
+          <button type="button" onClick={closeComponentMenu}>
             <div style={{ marginTop: 8 }}>
               <ContrastBadge
                 rootEl={rootEl || null}
@@ -352,7 +365,6 @@ const Frame = ({
         {frame.nodes.map((node) => {
           const Component = Components[node.type];
           const menuKey = `${frame.id}-${node.id}`;
-          const menuState = componentMenus[menuKey];
 
           const currentProps = node.props || {};
 
@@ -409,7 +421,7 @@ const Frame = ({
               </button>
               <div
                 onMouseDown={(event) => onComponentMouseDown(event, frame.id, node.id, frame, node)}
-                onContextMenu={(event) => onShowComponentMenu(event, frame.id, node.id)}
+                onContextMenu={(event) => showComponentMenu(event, node.id)}
                 style={componentStyle}
                 className={`component ${selectedNodeId === node.id ? 'dragging' : ''}`}
               >
@@ -421,7 +433,7 @@ const Frame = ({
                     onProp={handleProp}
                     onProps={handleProps}
                     onContent={handleContent}
-                    onContextMenu={(event) => onShowComponentMenu(event, frame.id, node.id)}
+                    onContextMenu={(event) => showComponentMenu(event, node.id)}
                   />
                 ) : (
                   <div>Unknown component type: {node.type}</div>
@@ -430,7 +442,7 @@ const Frame = ({
                   <span className="component-link-badge" aria-label={uiHintsEnabled ? 'Navigation link' : undefined} title={uiHintsEnabled ? navBadge : undefined}>{navBadge}</span>
                 )}
               </div>
-              {menuState?.isOpen && renderComponentMenu(menuKey, node)}
+              {activeComponentMenu && activeComponentMenu.nodeId === node.id && renderComponentMenu(menuKey, node)}
             </div>
           );
         })}
@@ -513,13 +525,11 @@ Frame.propTypes = {
   onShowMenu: PropTypes.func.isRequired,
   onUpdateFrame: PropTypes.func,
   onUpdateNode: PropTypes.func.isRequired,
-  onShowComponentMenu: PropTypes.func.isRequired,
+  onShowComponentMenu: PropTypes.func,
   screens: PropTypes.array,
   onCreateScreen: PropTypes.func,
   onCreateModalFrame: PropTypes.func,
-  componentMenus: PropTypes.object.isRequired,
   getComponent: PropTypes.func.isRequired,
-  closeComponentMenu: PropTypes.func.isRequired,
   addComponentComment: PropTypes.func.isRequired,
   getComponentComments: PropTypes.func.isRequired,
   frameTitleOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
