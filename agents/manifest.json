@@ -1,0 +1,62 @@
+{
+  "version": "0.1.0",
+  "agents": [
+    {
+      "id": "spec-proposer",
+      "name": "Spec Proposer",
+      "description": "Example agent that would propose RFC6902 patches to the spec store.",
+      "owner": "dev-team",
+      "permissions": ["propose", "apply"],
+      "entry": "agents/src/spec-proposer.mjs",
+      "notes": "Stub agent included for tooling/tests; replace with your real agent implementation."
+    },
+    {
+      "id": "spec-validator",
+      "name": "Spec Validator",
+      "description": "Validates spec/*.json against schemas.",
+      "owner": "qa",
+      "permissions": ["read"],
+      "entry": "agents/src/spec-validator.mjs"
+    },
+    {
+      "id": "preflight-validator",
+      "name": "Preflight Validator",
+      "description": "Runs preflight checks (a11y/tests/lint-build normalization).",
+      "owner": "qa",
+      "permissions": ["read"],
+      "entry": "agents/src/preflight-validator.mjs"
+    },
+    {
+      "id": "anchors-guard",
+      "name": "Anchors Guard",
+      "description": "Ensures generated region edits stay within anchors.",
+      "owner": "qa",
+      "permissions": ["read"],
+      "entry": "agents/src/anchors-guard.mjs"
+    },
+    {
+      "id": "reports-verifier",
+      "name": "Reports Verifier",
+      "description": "Verifies reports index has required keys and is reachable.",
+      "owner": "qa",
+      "permissions": ["read"],
+      "entry": "agents/src/reports-verifier.mjs"
+    },
+    {
+      "id": "a11y-scanner",
+      "name": "A11y Scanner",
+      "description": "Runs accessibility scans using configured runner.",
+      "owner": "qa",
+      "permissions": ["read"],
+      "entry": "agents/src/a11y-scanner.mjs"
+    },
+    {
+      "id": "lintbuild-summarizer",
+      "name": "Lint/Build Summarizer",
+      "description": "Summarizes lint/build results into a compact report.",
+      "owner": "qa",
+      "permissions": ["read"],
+      "entry": "agents/src/lintbuild-summarizer.mjs"
+    }
+  ]
+}
